@@ -1074,4 +1074,4 @@ return [
     'wrong_product:'=> 'Lý Do Thu Hồi',
     'revoke_signature' => 'Thu Hồi Chữ Ký',
 ];
-?>
+
