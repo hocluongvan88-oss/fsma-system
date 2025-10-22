@@ -1,0 +1,199 @@
+[20-Oct-2025 15:57:47 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 15:59:24 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 15:59:40 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 15:59:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 15:59:49 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:29:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:30:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:31:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:32:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:33:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:34:37 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:34:39 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:35:09 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:35:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:36:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:37:38 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:37:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:37:48 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:37:50 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:38:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:39:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:40:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:40:46 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:40:49 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:41:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:41:50 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:42:32 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:42:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:43:09 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:43:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:44:43 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:45:29 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:45:30 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:45:31 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:45:34 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 16:58:11 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[20-Oct-2025 17:06:54 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot use App\Http\Controllers\EnhancedESignatureController as EnhancedESignatureController because the name is already in use in /home/fxiasdcg/root/routes/web.php on line 24
+[20-Oct-2025 17:07:54 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot use App\Http\Controllers\SignatureRecordTypeController as SignatureRecordTypeController because the name is already in use in /home/fxiasdcg/root/routes/web.php on line 24
+[20-Oct-2025 17:08:20 Asia/Ho_Chi_Minh] PHP Fatal error:  Cannot declare class App\Http\Controllers\Admin\EnhancedESignatureController, because the name is already in use in /home/fxiasdcg/root/app/Http/Controllers/EnhancedESignatureController.php on line 10
+[22-Oct-2025 13:18:08 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:18:28 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:18:29 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:18:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:18:35 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:18:37 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:19:58 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:20:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:21:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:21:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:22:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:22:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:23:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:23:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:24:22 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:24:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:25:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:25:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:26:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:27:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:28:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:29:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:30:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:31:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:31:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:32:11 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:32:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:33:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:33:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:34:00 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:34:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[22-Oct-2025 13:35:30 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29

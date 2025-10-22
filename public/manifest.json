@@ -1,0 +1,22 @@
+{
+  "name": "FSMA 204 Traceability System",
+  "short_name": "FSMA 204",
+  "description": "Food Safety Modernization Act Section 204 Traceability System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#3b82f6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/placeholder-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/placeholder-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

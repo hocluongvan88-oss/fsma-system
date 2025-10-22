@@ -1,0 +1,48 @@
+<?php
+
+return [
+    'mode' => env('DOMPDF_MODE', 'utf-8'),
+    'defines' => [
+        'DOMPDF_TEMP_DIR' => storage_path('app/dompdf'),
+        'DOMPDF_CHROOT' => public_path(),
+        'DOMPDF_LOG_OUTPUT_FILE' => storage_path('logs/dompdf.log'),
+    ],
+    'convert_entities' => true,
+    'options' => [
+        'commands' => [
+            'params' => [
+                'quiet' => true,
+            ],
+        ],
+        'fontDir' => storage_path('fonts/'),
+        'fontCache' => storage_path('fonts/'),
+        'tempDir' => storage_path('app/dompdf'),
+        'chroot' => public_path(),
+        'logOutputFile' => storage_path('logs/dompdf.log'),
+        'defaultFont' => 'Helvetica',
+        'dpi' => 96,
+        'defaultPaperSize' => 'a4',
+        'defaultPaperOrientation' => 'portrait',
+        'margin_bottom' => 0,
+        'margin_left' => 0,
+        'margin_right' => 0,
+        'margin_top' => 0,
+        'isPhpEnabled' => false,
+        'isRemoteEnabled' => false,
+        'isJavascriptEnabled' => true,
+        'isHtmlEntitiesEnabled' => true,
+        'isFontSubsettingEnabled' => false,
+        'debugPng' => false,
+        'debugKeepTemp' => false,
+        'debugCss' => false,
+        'debugLayout' => false,
+        'debugLayoutLines' => true,
+        'debugLayoutBlocks' => true,
+        'debugLayoutInline' => true,
+        'debugLayoutPaddingBox' => true,
+        'pdfBackend' => 'GD',
+        'pdflibLicense' => '',
+        'adminUsername' => 'user',
+        'adminPassword' => 'password',
+    ],
+];

@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FSMA 204 - Food Supply Chain Management Platform</title>
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+    </script>
+    
+    <!-- Facebook Pixel -->
+    <script>
+        !function(f,b,e,v,n,t,s)
+        {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+        if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+        n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];
+        s.parentNode.insertBefore(t,s)}(window, document,'script',
+        'https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', 'FACEBOOK_PIXEL_ID');
+        fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id=FACEBOOK_PIXEL_ID&ev=PageView&noscript=1" /></noscript>
+</head>
+<body>
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>Complete Food Supply Chain Compliance & Traceability</h1>
+            <p>Ensure FSMA 204 compliance, track products in real-time, and build customer trust with transparent supply chain management.</p>
+            <div class="hero-buttons">
+                <button class="btn btn-primary" onclick="scrollToForm()">Get Started Free</button>
+                <button class="btn btn-secondary" onclick="scrollToFeatures()">Learn More</button>
+            </div>
+        </div>
+        <div class="hero-image">
+            <div class="hero-graphic">
+                <div class="graphic-element"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats">
+        <div class="stat-item">
+            <div class="stat-number">500+</div>
+            <div class="stat-label">Companies Trust Us</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">99.9%</div>
+            <div class="stat-label">Uptime Guarantee</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Support Available</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">50M+</div>
+            <div class="stat-label">Records Tracked</div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <h2>Why Choose FSMA 204?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📋</div>
+                <h3>FSMA 204 Compliance</h3>
+                <p>Automatically track and document all supply chain events to meet FDA FSMA 204 requirements.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Real-Time Traceability</h3>
+                <p>Track products from farm to table with complete visibility and instant recall capabilities.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔐</div>
+                <h3>Enterprise Security</h3>
+                <p>Bank-level encryption, role-based access control, and comprehensive audit trails.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📱</div>
+                <h3>Mobile Ready</h3>
+                <p>Capture data on-the-go with our mobile app for receiving, transformation, and shipping.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔗</div>
+                <h3>Easy Integration</h3>
+                <p>Connect with your existing systems via APIs or use our pre-built integrations.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Advanced Analytics</h3>
+                <p>Get insights into your supply chain with detailed reports and dashboards.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Preview Section -->
+    <section class="pricing-preview">
+        <h2>Simple, Transparent Pricing</h2>
+        <div class="pricing-cards">
+            <div class="pricing-card">
+                <h3>Basic</h3>
+                <div class="price">$499<span>/month</span></div>
+                <ul class="pricing-features">
+                    <li>500 CTE Records/Month</li>
+                    <li>10 Documents</li>
+                    <li>1 User</li>
+                    <li>Email Support</li>
+                </ul>
+                <button class="btn btn-outline" onclick="scrollToForm()">Get Started</button>
+            </div>
+            <div class="pricing-card featured">
+                <div class="badge">Most Popular</div>
+                <h3>Premium</h3>
+                <div class="price">$1,910<span>/month</span></div>
+                <ul class="pricing-features">
+                    <li>2,500 CTE Records/Month</li>
+                    <li>Unlimited Documents</li>
+                    <li>3 Users</li>
+                    <li>Priority Support</li>
+                </ul>
+                <button class="btn btn-primary" onclick="scrollToForm()">Get Started</button>
+            </div>
+            <div class="pricing-card">
+                <h3>Enterprise</h3>
+                <div class="price">Custom</div>
+                <ul class="pricing-features">
+                    <li>5,000+ CTE Records/Month</li>
+                    <li>Unlimited Documents</li>
+                    <li>5+ Users</li>
+                    <li>Dedicated Support</li>
+                </ul>
+                <button class="btn btn-outline" onclick="contactSales()">Contact Sales</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Testimonials Section -->
+    <section class="testimonials">
+        <h2>Trusted by Industry Leaders</h2>
+        <div class="testimonials-grid">
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p>"FSMA 204 has transformed how we manage our supply chain. Compliance is now effortless."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">JD</div>
+                    <div>
+                        <div class="author-name">John Davis</div>
+                        <div class="author-title">Supply Chain Director, FreshCo</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p>"The mobile app makes data capture incredibly easy. Our team loves it."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">SM</div>
+                    <div>
+                        <div class="author-name">Sarah Martinez</div>
+                        <div class="author-title">Operations Manager, Global Foods</div>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p>"Best investment we made for compliance. ROI was immediate."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">RK</div>
+                    <div>
+                        <div class="author-name">Rajesh Kumar</div>
+                        <div class="author-title">CEO, Quality Foods Ltd</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Lead Capture Form Section -->
+    <section class="lead-form-section" id="form">
+        <div class="form-container">
+            <h2>Start Your Free Trial Today</h2>
+            <p>No credit card required. Get instant access to FSMA 204 compliance tools.</p>
+            
+            <form id="leadForm" class="lead-form">
+                <div class="form-group">
+                    <input type="text" name="company_name" placeholder="Company Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="full_name" placeholder="Full Name" required>
+                </div>
+                <div class="form-group">
+                    <input type="email" name="email" placeholder="Business Email" required>
+                </div>
+                <div class="form-group">
+                    <input type="tel" name="phone" placeholder="Phone Number" required>
+                </div>
+                <div class="form-group">
+                    <select name="industry" required>
+                        <option value="">Select Industry</option>
+                        <option value="produce">Produce</option>
+                        <option value="dairy">Dairy</option>
+                        <option value="meat">Meat & Poultry</option>
+                        <option value="seafood">Seafood</option>
+                        <option value="processed">Processed Foods</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select name="country" required>
+                        <option value="">Select Country</option>
+                        <option value="us">United States</option>
+                        <option value="vn">Vietnam</option>
+                        <option value="ca">Canada</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group checkbox">
+                    <input type="checkbox" name="terms" required>
+                    <label>I agree to the Terms of Service and Privacy Policy</label>
+                </div>
+                <button type="submit" class="btn btn-primary btn-large">Start Free Trial</button>
+                <p class="form-note">We'll send you a confirmation email with your login credentials.</p>
+            </form>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-grid">
+            <div class="faq-item">
+                <h3>What is FSMA 204?</h3>
+                <p>FSMA 204 is an FDA regulation requiring food facilities to maintain records of all supply chain events for traceability purposes.</p>
+            </div>
+            <div class="faq-item">
+                <h3>How long is the free trial?</h3>
+                <p>Our free trial lasts 30 days with full access to all features. No credit card required to start.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Can I integrate with my existing system?</h3>
+                <p>Yes! We offer REST APIs and pre-built integrations with popular ERP and inventory systems.</p>
+            </div>
+            <div class="faq-item">
+                <h3>What support do you offer?</h3>
+                <p>We provide 24/7 email support for all plans, with phone support available for Premium and Enterprise customers.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Is my data secure?</h3>
+                <p>Yes. We use bank-level encryption, regular security audits, and comply with GDPR and other data protection regulations.</p>
+            </div>
+            <div class="faq-item">
+                <h3>Can I upgrade or downgrade anytime?</h3>
+                <p>Absolutely. You can change your plan at any time, and we'll prorate charges accordingly.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-final">
+        <h2>Ready to Ensure Compliance?</h2>
+        <p>Join hundreds of food companies already using FSMA 204 for supply chain management.</p>
+        <button class="btn btn-primary btn-large" onclick="scrollToForm()">Get Started Free</button>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h4>FSMA 204</h4>
+                <p>Complete food supply chain compliance and traceability platform.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Product</h4>
+                <ul>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#pricing">Pricing</a></li>
+                    <li><a href="#">Documentation</a></li>
+                    <li><a href="#">API Reference</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="#">About Us</a></li>
+                    <li><a href="#">Blog</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="#">Privacy Policy</a></li>
+                    <li><a href="#">Terms of Service</a></li>
+                    <li><a href="#">Security</a></li>
+                    <li><a href="#">Compliance</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 FSMA 204. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

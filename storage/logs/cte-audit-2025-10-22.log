@@ -1,0 +1,28 @@
+[2025-10-22 14:13:53] local.INFO: E-Signature Created {"signature_id":14,"action":"create_receiving","record_id":10,"user_id":1,"timestamp":"2025-10-22T14:13:53+07:00"} 
+[2025-10-22 14:13:53] local.INFO: CTE Event Created: receiving {"event_id":10,"event_type":"receiving","user_id":1,"organization_id":1,"timestamp":"2025-10-22T14:13:53+07:00","data":{"tlc":"TOM-0013","quantity":"1000","unit":"kg"}} 
+[2025-10-22 14:14:59] local.INFO: E-Signature Created {"signature_id":15,"action":"void","record_id":10,"user_id":1,"timestamp":"2025-10-22T14:14:59+07:00"} 
+[2025-10-22 14:14:59] local.WARNING: CTE Event Voided {"event_id":10,"reason":"data_entry_error","user_id":1,"timestamp":"2025-10-22T14:14:59+07:00","data":{"execution_time_ms":12.1199999999999992184029906638897955417633056640625,"signature_id":15}} 
+[2025-10-22 14:24:58] local.INFO: E-Signature Created {"signature_id":16,"action":"create_receiving","record_id":12,"user_id":1,"timestamp":"2025-10-22T14:24:58+07:00"} 
+[2025-10-22 14:24:58] local.INFO: CTE Event Created: receiving {"event_id":12,"event_type":"receiving","user_id":1,"organization_id":1,"timestamp":"2025-10-22T14:24:58+07:00","data":{"tlc":"TOM-0014","quantity":"1000","unit":"kg"}} 
+[2025-10-22 14:25:55] local.INFO: E-Signature Created {"signature_id":17,"action":"void","record_id":12,"user_id":1,"timestamp":"2025-10-22T14:25:55+07:00"} 
+[2025-10-22 14:25:55] local.WARNING: CTE Event Voided {"event_id":12,"reason":"data_entry_error","user_id":1,"timestamp":"2025-10-22T14:25:55+07:00","data":{"execution_time_ms":15.1699999999999999289457264239899814128875732421875,"signature_id":17}} 
+[2025-10-22 14:37:47] local.INFO: E-Signature Created {"signature_id":1,"action":"create_receiving","record_id":1,"user_id":1,"timestamp":"2025-10-22T14:37:47+07:00"} 
+[2025-10-22 14:37:47] local.INFO: CTE Event Created: receiving {"event_id":1,"event_type":"receiving","user_id":1,"organization_id":1,"timestamp":"2025-10-22T14:37:47+07:00","data":{"tlc":"TOM-0014","quantity":"1000","unit":"kg"}} 
+[2025-10-22 14:38:00] local.INFO: E-Signature Created {"signature_id":2,"action":"void","record_id":1,"user_id":1,"timestamp":"2025-10-22T14:38:00+07:00"} 
+[2025-10-22 14:38:00] local.WARNING: CTE Event Voided {"event_id":1,"reason":"data_entry_error","user_id":1,"timestamp":"2025-10-22T14:38:00+07:00","data":{"execution_time_ms":10.480000000000000426325641456060111522674560546875,"signature_id":2}} 
+[2025-10-22 14:44:42] local.INFO: E-Signature Created {"signature_id":3,"action":"create_receiving","record_id":5,"user_id":1,"timestamp":"2025-10-22T14:44:42+07:00"} 
+[2025-10-22 14:44:42] local.INFO: CTE Event Created: receiving {"event_id":5,"event_type":"receiving","user_id":1,"organization_id":1,"timestamp":"2025-10-22T14:44:42+07:00","data":{"tlc":"TOM-0015","quantity":"1000","unit":"lb"}} 
+[2025-10-22 14:45:09] local.INFO: E-Signature Created {"signature_id":4,"action":"void","record_id":5,"user_id":1,"timestamp":"2025-10-22T14:45:09+07:00"} 
+[2025-10-22 14:45:09] local.WARNING: CTE Event Voided {"event_id":5,"reason":"data_entry_error","user_id":1,"timestamp":"2025-10-22T14:45:09+07:00","data":{"execution_time_ms":25.03999999999999914734871708787977695465087890625,"signature_id":4}} 
+[2025-10-22 15:01:27] local.INFO: E-Signature Created {"signature_id":5,"action":"create_receiving","record_id":7,"user_id":1,"timestamp":"2025-10-22T15:01:27+07:00"} 
+[2025-10-22 15:01:27] local.INFO: CTE Event Created: receiving {"event_id":7,"event_type":"receiving","user_id":1,"organization_id":1,"timestamp":"2025-10-22T15:01:27+07:00","data":{"tlc":"TOM-0013","quantity":"1000","unit":"kg"}} 
+[2025-10-22 15:02:09] local.INFO: E-Signature Created {"signature_id":6,"action":"void","record_id":7,"user_id":1,"timestamp":"2025-10-22T15:02:09+07:00"} 
+[2025-10-22 15:02:09] local.WARNING: CTE Event Voided {"event_id":7,"reason":"duplicate_entry","user_id":1,"timestamp":"2025-10-22T15:02:09+07:00","data":{"execution_time_ms":10.8499999999999996447286321199499070644378662109375,"signature_id":6}} 
+[2025-10-22 15:09:32] local.INFO: E-Signature Created {"signature_id":7,"action":"create_receiving","record_id":9,"user_id":1,"timestamp":"2025-10-22T15:09:32+07:00"} 
+[2025-10-22 15:09:32] local.INFO: CTE Event Created: receiving {"event_id":9,"event_type":"receiving","user_id":1,"organization_id":1,"timestamp":"2025-10-22T15:09:32+07:00","data":{"tlc":"TTC01","quantity":"1000","unit":"kg"}} 
+[2025-10-22 15:09:46] local.INFO: E-Signature Created {"signature_id":8,"action":"void","record_id":9,"user_id":1,"timestamp":"2025-10-22T15:09:46+07:00"} 
+[2025-10-22 15:09:46] local.WARNING: CTE Event Voided {"event_id":9,"reason":"data_entry_error","user_id":1,"timestamp":"2025-10-22T15:09:46+07:00","data":{"execution_time_ms":11.6699999999999999289457264239899814128875732421875,"signature_id":8}} 
+[2025-10-22 15:26:29] local.INFO: E-Signature Created {"signature_id":9,"action":"create_receiving","record_id":11,"user_id":1,"timestamp":"2025-10-22T15:26:29+07:00"} 
+[2025-10-22 15:26:29] local.INFO: CTE Event Created: receiving {"event_id":11,"event_type":"receiving","user_id":1,"organization_id":1,"timestamp":"2025-10-22T15:26:29+07:00","data":{"tlc":"TTC03","quantity":"1000","unit":"kg"}} 
+[2025-10-22 15:26:46] local.INFO: E-Signature Created {"signature_id":10,"action":"void","record_id":11,"user_id":1,"timestamp":"2025-10-22T15:26:46+07:00"} 
+[2025-10-22 15:26:46] local.WARNING: CTE Event Voided {"event_id":11,"reason":"wrong_product","user_id":1,"timestamp":"2025-10-22T15:26:46+07:00","data":{"execution_time_ms":9.9700000000000006394884621840901672840118408203125,"signature_id":10}} 

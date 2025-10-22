@@ -1,0 +1,7 @@
+/vendor/
+/node_modules/
+/public/build/
+/public/error_log
+.env
+.DS_Store
+.idea
