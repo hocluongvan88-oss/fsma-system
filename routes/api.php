@@ -1,5 +1,5 @@
 <?php
-
+use App\Http\Controllers\LanguageController; 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\BarcodeController;
 use App\Http\Controllers\Api\TraceabilityController;
@@ -32,3 +32,5 @@ Route::middleware(['auth:sanctum', 'rate.limit.trace'])->group(function () {
         Route::get('/list', [ExportVerificationController::class, 'listExports']);
     });
 });
+// Thêm đoạn code này ở cuối file api.php
+Route::get('/translations/{locale}', [LanguageController::class, 'getTranslations']);
