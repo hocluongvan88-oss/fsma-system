@@ -75,4 +75,64 @@ class LanguageController extends Controller
 
         return redirect($redirectUrl)->with('success', __('messages.language_changed'));
     }
+
+    /**
+     * Get translations for a specific locale via API
+     * Called by JavaScript to load translations dynamically
+     */
+    public function getTranslations(Request $request, $locale)
+    {
+        Log::info("[v0] getTranslations API called", [
+            'locale' => $locale,
+            'user_id' => auth()->id() ?? 'guest'
+        ]);
+
+        $availableLocales = config('locales.available_locales', []);
+
+        // Validate locale
+        if (!array_key_exists($locale, $availableLocales)) {
+            Log::warning("[v0] getTranslations: Invalid locale requested", [
+                'requested_locale' => $locale,
+                'available_locales' => array_keys($availableLocales)
+            ]);
+            return response()->json([
+                'error' => 'Invalid locale',
+                'available_locales' => array_keys($availableLocales)
+            ], 400);
+        }
+
+        // Load translations from lang files
+        $translationPath = resource_path("lang/{$locale}");
+        
+        if (!is_dir($translationPath)) {
+            Log::warning("[v0] getTranslations: Translation directory not found", [
+                'locale' => $locale,
+                'path' => $translationPath
+            ]);
+            return response()->json([
+                'error' => 'Translation files not found for locale: ' . $locale
+            ], 404);
+        }
+
+        // Load all translation files for this locale
+        $translations = [];
+        $files = glob($translationPath . '/*.php');
+
+        foreach ($files as $file) {
+            $filename = basename($file, '.php');
+            $translations[$filename] = require $file;
+        }
+
+        Log::info("[v0] getTranslations: Successfully loaded translations", [
+            'locale' => $locale,
+            'files_loaded' => count($files),
+            'translation_keys' => array_keys($translations)
+        ]);
+
+        // Return translations as JSON with cache headers
+        return response()->json($translations)
+            ->header('Cache-Control', 'public, max-age=3600')
+            ->header('Content-Type', 'application/json; charset=utf-8');
+    }
 }
+
