@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\DigitalCertificateService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class DigitalCertificateController extends Controller
 {
@@ -71,6 +72,7 @@ class DigitalCertificateController extends Controller
 
     /**
      * Download certificate
+     * Serve certificate directly from database instead of file system
      */
     public function download()
     {
@@ -81,11 +83,10 @@ class DigitalCertificateController extends Controller
             return back()->withErrors(['error' => 'No certificate found']);
         }
 
-        return response()->download(
-            storage_path('certificates/' . $certificate->certificate_id . '.pem'),
-            'certificate.pem',
-            ['Content-Type' => 'application/x-pem-file']
-        );
+        return response($certificate->certificate_pem, 200)
+            ->header('Content-Type', 'application/x-pem-file')
+            ->header('Content-Disposition', 'attachment; filename="certificate_' . $certificate->certificate_id . '.pem"')
+            ->header('Content-Length', strlen($certificate->certificate_pem));
     }
 
     /**
