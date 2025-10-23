@@ -41,8 +41,13 @@ class NotificationController extends Controller
         return redirect()->back()->with('success', 'Đã đánh dấu tất cả thông báo là đã đọc');
     }
 
-    public function getBlocking()
+    public function getBlocking(Request $request)
     {
+        if (!auth()->check()) {
+            \Log::info('[v0] getBlocking called without authentication');
+            return response()->json(null, 200);
+        }
+
         \Log::info('[v0] Fetching blocking notification for user: ' . auth()->id());
         
         $notification = auth()->user()
