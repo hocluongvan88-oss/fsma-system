@@ -44,6 +44,8 @@ class LanguageController extends Controller
         
         Session::put('locale', $locale);
         Session::save();
+        session()->flush();
+        session()->put('locale', $locale);
         Log::info("[v0] Session::put() called", ['locale' => $locale, 'session_locale_after' => Session::get('locale')]);
 
         if (auth()->check()) {
@@ -71,7 +73,7 @@ class LanguageController extends Controller
 
         $redirectUrl = redirect()->back()->getTargetUrl();
         $separator = strpos($redirectUrl, '?') !== false ? '&' : '?';
-        $redirectUrl .= $separator . '_locale_changed=' . time();
+        $redirectUrl .= $separator . 'lang=' . $locale . '&_ts=' . time();
 
         return redirect($redirectUrl)->with('success', __('messages.language_changed'));
     }
@@ -135,4 +137,3 @@ class LanguageController extends Controller
             ->header('Content-Type', 'application/json; charset=utf-8');
     }
 }
-
