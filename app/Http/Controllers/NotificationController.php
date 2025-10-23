@@ -19,6 +19,7 @@ class NotificationController extends Controller
 
     public function unreadCount()
     {
+        // Giả định người dùng luôn đăng nhập khi gọi API này
         $count = auth()->user()->notifications()->unread()->count();
         return response()->json(['count' => $count]);
     }
@@ -41,8 +42,14 @@ class NotificationController extends Controller
         return redirect()->back()->with('success', 'Đã đánh dấu tất cả thông báo là đã đọc');
     }
 
-    public function getBlocking()
+    public function getBlocking(Request $request)
     {
+        // Kiểm tra xác thực để tránh lỗi Fatal Error (Fatal Error: Call to a member function... on null)
+        if (!auth()->check()) {
+            \Log::info('[v0] getBlocking called without authentication');
+            return response()->json(null, 200);
+        }
+
         \Log::info('[v0] Fetching blocking notification for user: ' . auth()->id());
         
         $notification = auth()->user()
@@ -59,7 +66,6 @@ class NotificationController extends Controller
             'is_blocking' => $notification?->is_blocking,
         ]);
 
-        // Return null if no notification found (not an empty object)
         return response()->json($notification);
     }
 }
