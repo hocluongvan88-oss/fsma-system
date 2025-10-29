@@ -10,9 +10,12 @@ class TraceabilityService
 {
     /**
      * Trace forward from a record
+     * Added organization_id validation to prevent cross-org access
      */
     public function traceForward(TraceRecord $record)
     {
+        $this->validateRecordAccess($record);
+        
         $chain = [];
         $visited = [];
         
@@ -27,9 +30,12 @@ class TraceabilityService
     
     /**
      * Trace backward from a record
+     * Added organization_id validation to prevent cross-org access
      */
     public function traceBackward(TraceRecord $record)
     {
+        $this->validateRecordAccess($record);
+        
         $chain = [];
         $visited = [];
         
@@ -41,9 +47,32 @@ class TraceabilityService
             'total_steps' => count($chain),
         ];
     }
+
+    /**
+     * NEW METHOD: Validate record belongs to current user's organization
+     */
+    private function validateRecordAccess(TraceRecord $record): void
+    {
+        $user = auth()->user();
+        
+        if (!$user) {
+            throw new \Exception('Unauthorized: No authenticated user');
+        }
+        
+        // Admin can access all records
+        if (method_exists($user, 'isAdmin') && $user->isAdmin()) {
+            return;
+        }
+        
+        // Regular users can only access records from their organization
+        if ($record->organization_id !== $user->organization_id) {
+            throw new \Exception('Unauthorized: Record does not belong to your organization');
+        }
+    }
     
     /**
      * Build forward chain recursively
+     * Added organization_id filter to all CTEEvent queries
      */
     protected function buildForwardChain(TraceRecord $record, &$chain, &$visited)
     {
@@ -53,9 +82,9 @@ class TraceabilityService
         
         $visited[] = $record->id;
         
-        // Find shipping events where this record was shipped
         $shippingEvents = CTEEvent::where('event_type', 'shipping')
             ->where('trace_record_id', $record->id)
+            ->where('organization_id', $record->organization_id)
             ->where('status', 'active')
             ->with(['partner', 'location'])
             ->get();
@@ -76,9 +105,9 @@ class TraceabilityService
             
             $chain[] = $step;
             
-            // Find receiving events at destination
             $receivingEvents = CTEEvent::where('event_type', 'receiving')
                 ->where('reference_document_number', $event->reference_document_number)
+                ->where('organization_id', $record->organization_id)
                 ->where('status', 'active')
                 ->with('traceRecord')
                 ->get();
@@ -93,6 +122,7 @@ class TraceabilityService
     
     /**
      * Build backward chain recursively
+     * Added organization_id filter to all CTEEvent queries
      */
     protected function buildBackwardChain(TraceRecord $record, &$chain, &$visited)
     {
@@ -102,9 +132,9 @@ class TraceabilityService
         
         $visited[] = $record->id;
         
-        // Find receiving event for this record
         $receivingEvent = CTEEvent::where('event_type', 'receiving')
             ->where('trace_record_id', $record->id)
+            ->where('organization_id', $record->organization_id)
             ->where('status', 'active')
             ->with(['partner', 'location'])
             ->first();
@@ -125,10 +155,10 @@ class TraceabilityService
             
             $chain[] = $step;
             
-            // Find corresponding shipping event
             if ($receivingEvent->reference_document_number) {
                 $shippingEvent = CTEEvent::where('event_type', 'shipping')
                     ->where('reference_document_number', $receivingEvent->reference_document_number)
+                    ->where('organization_id', $record->organization_id)
                     ->where('status', 'active')
                     ->with('traceRecord')
                     ->first();

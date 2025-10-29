@@ -28,7 +28,12 @@ class AuditTrailController extends Controller
             'per_page' => 'nullable|integer|min:10|max:100',
         ]);
 
-        $query = ESignature::with(['user']);
+        $currentUser = auth()->user();
+        
+        $query = ESignature::with(['user'])
+            ->whereHas('user', function($q) use ($currentUser) {
+                $q->where('organization_id', $currentUser->organization_id);
+            });
 
         // Apply filters
         if ($validated['record_type'] ?? null) {
@@ -112,7 +117,12 @@ class AuditTrailController extends Controller
             'status' => 'nullable|in:active,revoked',
         ]);
 
-        $query = ESignature::with(['user']);
+        $currentUser = auth()->user();
+        
+        $query = ESignature::with(['user'])
+            ->whereHas('user', function($q) use ($currentUser) {
+                $q->where('organization_id', $currentUser->organization_id);
+            });
 
         // Apply filters
         if ($validated['record_type'] ?? null) {
@@ -178,14 +188,14 @@ class AuditTrailController extends Controller
             foreach ($signatures as $signature) {
                 fputcsv($file, [
                     $signature->signed_at->format('Y-m-d H:i:s'),
-                    $signature->user->full_name,
-                    $signature->user->email,
+                    'User-' . hash('sha256', (string)$signature->user->id),  // Pseudonymized user name
+                    hash('sha256', $signature->user->email),                  // Hashed email
                     $signature->record_type,
                     $signature->record_id,
                     $signature->action,
                     $signature->meaning_of_signature,
                     $signature->reason,
-                    $signature->ip_address,
+                    $this->maskIP($signature->ip_address),                   // Masked IP address
                     $signature->signature_algorithm,
                     $signature->is_revoked ? 'Revoked' : 'Active',
                     $signature->revoked_at?->format('Y-m-d H:i:s'),
@@ -211,7 +221,12 @@ class AuditTrailController extends Controller
             'date_to' => 'nullable|date',
         ]);
 
-        $query = ESignature::query();
+        $currentUser = auth()->user();
+        
+        $query = ESignature::query()
+            ->whereHas('user', function($q) use ($currentUser) {
+                $q->where('organization_id', $currentUser->organization_id);
+            });
 
         if ($validated['date_from'] ?? null) {
             $query->whereDate('signed_at', '>=', $validated['date_from']);
@@ -223,11 +238,11 @@ class AuditTrailController extends Controller
 
         $stats = [
             'total_signatures' => $query->count(),
-            'active_signatures' => $query->where('is_revoked', false)->count(),
-            'revoked_signatures' => $query->where('is_revoked', true)->count(),
-            'with_timestamp' => $query->whereNotNull('timestamp_token')->count(),
-            'with_2fa' => $query->whereNotNull('mfa_method')->count(),
-            'by_user' => $query->selectRaw('user_id, COUNT(*) as count')
+            'active_signatures' => (clone $query)->where('is_revoked', false)->count(),
+            'revoked_signatures' => (clone $query)->where('is_revoked', true)->count(),
+            'with_timestamp' => (clone $query)->whereNotNull('timestamp_token')->count(),
+            'with_2fa' => (clone $query)->whereNotNull('mfa_method')->count(),
+            'by_user' => (clone $query)->selectRaw('user_id, COUNT(*) as count')
                 ->groupBy('user_id')
                 ->with('user')
                 ->get()
@@ -238,7 +253,7 @@ class AuditTrailController extends Controller
                         'count' => $item->count,
                     ];
                 }),
-            'by_action' => $query->selectRaw('action, COUNT(*) as count')
+            'by_action' => (clone $query)->selectRaw('action, COUNT(*) as count')
                 ->groupBy('action')
                 ->get()
                 ->map(function ($item) {
@@ -247,7 +262,7 @@ class AuditTrailController extends Controller
                         'count' => $item->count,
                     ];
                 }),
-            'by_record_type' => $query->selectRaw('record_type, COUNT(*) as count')
+            'by_record_type' => (clone $query)->selectRaw('record_type, COUNT(*) as count')
                 ->groupBy('record_type')
                 ->get()
                 ->map(function ($item) {
@@ -262,5 +277,19 @@ class AuditTrailController extends Controller
             'success' => true,
             'data' => $stats,
         ]);
+    }
+
+    /**
+     * Mask IP address for privacy (GDPR compliance)
+     * Converts 192.168.1.100 to 192.168.xxx.xxx
+     */
+    private function maskIP(string $ip): string
+    {
+        $parts = explode('.', $ip);
+        if (count($parts) === 4) {
+            return $parts[0] . '.' . $parts[1] . '.xxx.xxx';
+        }
+        // For IPv6 or other formats, hash it
+        return hash('sha256', $ip);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\RetentionPolicy;
 use App\Models\RetentionLog;
+use App\Models\AuditLog;
 use App\Services\DataRetentionService;
 use Illuminate\Http\Request;
 
@@ -14,16 +15,12 @@ class RetentionPolicyController extends Controller
     public function __construct(DataRetentionService $retentionService)
     {
         $this->retentionService = $retentionService;
-        $this->middleware('auth');
-        $this->middleware('admin');
+        $this->middleware('ensure.compliance.officer.access');
     }
 
-    /**
-     * Show retention policies management page
-     */
     public function index()
     {
-        $policies = RetentionPolicy::all();
+        $policies = RetentionPolicy::withoutTrashed()->get();
         $stats = $this->retentionService->getRetentionStats();
         $recentLogs = RetentionLog::latest('executed_at')->limit(10)->get();
 
@@ -48,19 +45,17 @@ class RetentionPolicyController extends Controller
         ]);
     }
 
-    /**
-     * Create new retention policy
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
             'policy_name' => 'required|string|unique:retention_policies',
-            'data_type' => 'required|string|in:error_logs,notifications',
-            'retention_months' => 'required|integer|min:0|max:120',
+            'retention_months' => 'required|integer|min:' . DataRetentionService::FSMA_204_MINIMUM_RETENTION_MONTHS . '|max:120',
             'backup_before_deletion' => 'boolean',
             'description' => 'nullable|string',
+            'data_type' => 'required|string|in:' . implode(',', DataRetentionService::DELETABLE_DATA_TYPES),
         ]);
 
+        $validated['organization_id'] = auth()->user()?->organization_id;
         $validated['created_by'] = auth()->user()->email;
 
         $validation = $this->retentionService->validateRetentionPolicy(
@@ -75,8 +70,20 @@ class RetentionPolicyController extends Controller
         }
 
         try {
-            $this->retentionService->createPolicy($validated);
-            return redirect()->route('retention.index')
+            $policy = $this->retentionService->createPolicy($validated);
+            
+            AuditLog::createLog([
+                'user_id' => auth()->user()->id,
+                'action' => 'retention_policy_created',
+                'table_name' => 'retention_policies',
+                'record_id' => $policy->id,
+                'organization_id' => auth()->user()->organization_id,
+                'new_values' => $validated,
+                'ip_address' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+            ]);
+            
+            return redirect()->route('admin.retention.index')
                 ->with('success', __('messages.retention_policy_created'));
         } catch (\InvalidArgumentException $e) {
             return redirect()->back()
@@ -85,60 +92,113 @@ class RetentionPolicyController extends Controller
         }
     }
 
-    /**
-     * Get policy data for editing (returns JSON)
-     */
     public function edit(RetentionPolicy $policy)
     {
-        return response()->json($policy);
+        $this->authorize('view', $policy);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $policy,
+        ], 200);
     }
 
-    /**
-     * Update retention policy
-     */
     public function update(Request $request, RetentionPolicy $policy)
     {
+        $this->authorize('update', $policy);
+        
         $validated = $request->validate([
-            'retention_months' => 'required|integer|min:0|max:120',
+            'retention_months' => 'required|integer|min:' . DataRetentionService::FSMA_204_MINIMUM_RETENTION_MONTHS . '|max:120',
             'backup_before_deletion' => 'boolean',
             'is_active' => 'boolean',
             'description' => 'nullable|string',
         ]);
 
         $validated['updated_by'] = auth()->user()->email;
-
+        
+        // Store original values for audit log
+        $originalValues = $policy->only(array_keys($validated));
+        
         $policy->update($validated);
 
-        return redirect()->route('retention.index')
+        AuditLog::createLog([
+            'user_id' => auth()->user()->id,
+            'action' => 'retention_policy_updated',
+            'table_name' => 'retention_policies',
+            'record_id' => $policy->id,
+            'organization_id' => auth()->user()->organization_id,
+            'old_values' => $originalValues,
+            'new_values' => $validated,
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+
+        return redirect()->route('admin.retention.index')
             ->with('success', __('messages.retention_policy_updated'));
     }
 
-    /**
-     * Execute retention cleanup
-     */
+    public function destroy(RetentionPolicy $policy)
+    {
+        $this->authorize('delete', $policy);
+        
+        AuditLog::createLog([
+            'user_id' => auth()->user()->id,
+            'action' => 'retention_policy_deleted',
+            'table_name' => 'retention_policies',
+            'record_id' => $policy->id,
+            'organization_id' => auth()->user()->organization_id,
+            'old_values' => $policy->toArray(),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+        
+        $policy->delete();
+
+        return redirect()->route('admin.retention.index')
+            ->with('success', __('messages.retention_policy_deleted'));
+    }
+
     public function execute(Request $request, RetentionPolicy $policy)
     {
+        $this->authorize('execute', $policy);
+        
         $dryRun = $request->boolean('dry_run', false);
         $result = $this->retentionService->executeCleanup($policy->data_type, $dryRun);
 
         if ($result['status'] === 'blocked') {
-            return redirect()->route('retention.index')
+            return redirect()->route('admin.retention.index')
                 ->withErrors(['execution' => $result['reason']]);
         }
+
+        AuditLog::createLog([
+            'user_id' => auth()->user()->id,
+            'action' => $dryRun ? 'retention_cleanup_dry_run' : 'retention_cleanup_executed',
+            'table_name' => 'retention_policies',
+            'record_id' => $policy->id,
+            'organization_id' => auth()->user()->organization_id,
+            'new_values' => [
+                'data_type' => $policy->data_type,
+                'records_deleted' => $result['records_deleted'],
+                'records_backed_up' => $result['records_backed_up'],
+                'backup_path' => $result['backup_file_path'],
+                'status' => $result['status'],
+                'dry_run' => $dryRun,
+            ],
+            'ip_address' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
 
         $message = $dryRun 
             ? __('messages.dry_run_completed', ['count' => $result['records_deleted']])
             : __('messages.cleanup_completed', ['count' => $result['records_deleted']]);
 
-        return redirect()->route('retention.index')
+        return redirect()->route('admin.retention.index')
             ->with('success', $message);
     }
 
-    /**
-     * View retention logs
-     */
     public function logs()
     {
+        $this->authorize('viewLogs', RetentionPolicy::class);
+        
         $logs = RetentionLog::latest('executed_at')->paginate(20);
 
         return view('admin.retention.logs', [

@@ -20,14 +20,21 @@ class ErrorNotificationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '[CRITICAL] Error in FSMA 204 System - ' . $this->errorLog->error_type,
+            subject: '[CRITICAL] ' . __('messages.error_detected') . ' - ' . $this->errorLog->error_type,
         );
+    }
+
+    public function headers(): array
+    {
+        return [
+            'List-Unsubscribe' => '<' . route('email.unsubscribe', ['token' => auth()->user()->email_token ?? '']) . '>',
+        ];
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.error-notification',
+            view: 'email.error-notification',
             with: [
                 'errorLog' => $this->errorLog,
                 'dashboardUrl' => route('admin.errors.show', $this->errorLog->id),

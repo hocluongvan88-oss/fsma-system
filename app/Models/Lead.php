@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Services\CrmIntegrationService;
+use App\Traits\HasOrganizationScope;
 
 class Lead extends Model
 {
+    use HasOrganizationScope;
+
     protected $fillable = [
         'full_name',
         'email',
@@ -24,6 +27,7 @@ class Lead extends Model
         'user_agent',
         'contacted_at',
         'notes',
+        'organization_id', // Added organization_id for multi-tenancy
     ];
 
     protected $casts = [

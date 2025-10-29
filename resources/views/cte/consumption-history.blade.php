@@ -20,7 +20,7 @@
             </div>
             <div>
                 <div style="color: var(--text-secondary); font-size: 0.875rem;">{{ __('messages.product') }}</div>
-                <div style="font-weight: 600;">{{ $traceRecord->product->product_name }}</div>
+                <div style="font-weight: 600;">{{ $traceRecord->product?->product_name ?? __('messages.product_deleted') }}</div>
             </div>
             <div>
                 <div style="color: var(--text-secondary); font-size: 0.875rem;">{{ __('messages.status') }}</div>
@@ -95,12 +95,12 @@
                     <td>
                         <span class="badge badge-info">{{ __('messages.transformation') }}</span>
                     </td>
-                    <td>{{ $item->transformation->traceRecord->product->product_name }}</td>
+                    <td>{{ $item->transformation?->traceRecord?->product?->product_name ?? __('messages.product_deleted') }}</td>
                     <td style="font-weight: 600; color: var(--warning);">
                         {{ $item->quantity_used }} {{ $item->unit }}
                     </td>
-                    <td><strong>{{ $item->transformation->traceRecord->tlc }}</strong></td>
-                    <td>{{ $item->transformation->location->location_name }}</td>
+                    <td><strong>{{ $item->transformation?->traceRecord?->tlc ?? 'N/A' }}</strong></td>
+                    <td>{{ $item->transformation?->location?->location_name ?? 'N/A' }}</td>
                 </tr>
                 @endforeach
             </tbody>

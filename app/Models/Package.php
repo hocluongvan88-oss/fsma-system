@@ -30,10 +30,20 @@ class Package extends Model
         'is_highlighted',
         'is_visible',
         'is_selectable',
-        'sort_order', // Đổi từ display_order về sort_order để khớp với database
+        'sort_order',
         'stripe_product_id',
         'stripe_monthly_price_id',
         'stripe_yearly_price_id',
+        'has_traceability',
+        'has_document_management',
+        'has_e_signatures',
+        'has_certificates',
+        'has_data_retention',
+        'has_archival',
+        'has_compliance_report',
+        'has_voice_event',
+        'support_level',
+        'organization_id',
     ];
 
     protected $casts = [
@@ -47,12 +57,25 @@ class Package extends Model
         'monthly_selling_price' => 'decimal:2',
         'yearly_list_price' => 'decimal:2',
         'yearly_selling_price' => 'decimal:2',
+        'has_traceability' => 'boolean',
+        'has_document_management' => 'boolean',
+        'has_e_signatures' => 'boolean',
+        'has_certificates' => 'boolean',
+        'has_data_retention' => 'boolean',
+        'has_archival' => 'boolean',
+        'has_compliance_report' => 'boolean',
+        'has_voice_event' => 'boolean',
     ];
 
     // Relationships
-    public function users()
+    public function organizations()
     {
-        return $this->hasMany(User::class, 'package_id', 'id');
+        return $this->hasMany(Organization::class, 'package_id', 'id');
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     // Scopes
@@ -120,6 +143,22 @@ class Package extends Model
         return (($monthlyTotal - $this->yearly_selling_price) / $monthlyTotal) * 100;
     }
 
+    public function hasFeature(string $feature): bool
+    {
+        $featureMap = [
+            'traceability' => $this->has_traceability,
+            'document_management' => $this->has_document_management,
+            'e_signatures' => $this->has_e_signatures,
+            'certificates' => $this->has_certificates,
+            'data_retention' => $this->has_data_retention,
+            'archival' => $this->has_archival,
+            'compliance_report' => $this->has_compliance_report,
+            'voice_event' => $this->has_voice_event,
+        ];
+
+        return $featureMap[$feature] ?? false;
+    }
+
     public function toViewArray(): array
     {
         return [
@@ -140,6 +179,15 @@ class Package extends Model
             'features' => $this->features ?? [],
             'is_popular' => $this->is_popular,
             'is_highlighted' => $this->is_highlighted,
+            'has_traceability' => $this->has_traceability,
+            'has_document_management' => $this->has_document_management,
+            'has_e_signatures' => $this->has_e_signatures,
+            'has_certificates' => $this->has_certificates,
+            'has_data_retention' => $this->has_data_retention,
+            'has_archival' => $this->has_archival,
+            'has_compliance_report' => $this->has_compliance_report,
+            'has_voice_event' => $this->has_voice_event,
+            'support_level' => $this->support_level,
         ];
     }
 }

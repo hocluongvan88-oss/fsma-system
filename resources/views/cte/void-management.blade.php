@@ -97,7 +97,7 @@
                             @endif
                         </td>
                         <td style="padding: 1rem; color: var(--text-secondary);">
-                            {{ $event->traceRecord->product->product_name ?? 'N/A' }}
+                            {{ $event->traceRecord?->product?->product_name ?? 'N/A' }}
                         </td>
                         <td style="padding: 1rem; color: var(--text-secondary);">
                             {{ $event->voidedBy->full_name ?? 'System' }}

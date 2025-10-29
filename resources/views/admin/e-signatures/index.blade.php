@@ -252,15 +252,13 @@ async function refreshMetrics() {
     const period = document.getElementById('periodFilter').value;
     
     try {
-        const response = await fetch(`/admin/e-signatures/performance-metrics?period=${period}`);
+        const response = await fetch(`{{ route('admin.e-signatures.performance-metrics') }}?period=${period}`);
         
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const result = await response.json();
-        
-        console.log('[v0] API Response:', result);
         
         if (!result.success) {
             showAlert('Error loading metrics: ' + (result.message || 'Unknown error'), 'error');
@@ -305,7 +303,6 @@ async function refreshMetrics() {
         updateAlerts(data.alerts || []);
         
     } catch (error) {
-        console.error('[v0] Error fetching metrics:', error);
         showAlert('Failed to load metrics: ' + error.message, 'error');
     }
 }
@@ -485,7 +482,7 @@ function updateStatusChart(distribution) {
         type: 'doughnut',
         data: {
             labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
-            datasets: [{
+            datasets: [ {
                 data: values,
                 backgroundColor: labels.map(l => colors[l] || '#60a5fa'),
                 hoverBackgroundColor: labels.map(l => hoverColors[l] || '#93c5fd'),

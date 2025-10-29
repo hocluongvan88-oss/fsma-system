@@ -4,10 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
+use Illuminate\Support\Facades\Auth;
 
 class Partner extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $fillable = [
         'partner_name',
@@ -17,8 +19,19 @@ class Partner extends Model
         'phone',
         'address',
         'gln',
-        'organization_id', // Added organization_id to fillable for multi-tenancy
+        'organization_id',
     ];
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($partner) {
+            if (empty($partner->organization_id) && Auth::check()) {
+                $partner->organization_id = Auth::user()->organization_id;
+            }
+        });
+    }
 
     // Relationships
     public function cteEvents()

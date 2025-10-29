@@ -25,12 +25,12 @@ class LanguageController extends Controller
         $availableLocales = config('locales.available_locales', []);
         
         if (empty($availableLocales)) {
-            Log::warning('[v0] Language switch failed: No available locales configured');
+            Log::warning('[Locale] Language switch failed: No available locales configured');
             return redirect()->back()->with('error', __('messages.language_config_error'));
         }
 
         if (!array_key_exists($locale, $availableLocales)) {
-            Log::warning("[v0] Language switch failed: Invalid locale '{$locale}' requested", [
+            Log::warning("[Locale] Language switch failed: Invalid locale '{$locale}' requested", [
                 'requested_locale' => $locale,
                 'available_locales' => array_keys($availableLocales),
                 'ip' => $request->ip(),
@@ -44,8 +44,6 @@ class LanguageController extends Controller
         
         Session::put('locale', $locale);
         Session::save();
-        session()->flush();
-        session()->put('locale', $locale);
         Log::info("[v0] Session::put() called", ['locale' => $locale, 'session_locale_after' => Session::get('locale')]);
 
         if (auth()->check()) {
@@ -64,6 +62,8 @@ class LanguageController extends Controller
             }
         }
 
+        $this->clearLanguageCaches();
+
         Log::info("[v0] Language switched successfully - BEFORE REDIRECT", [
             'locale' => $locale,
             'user_id' => auth()->id() ?? 'guest',
@@ -71,11 +71,12 @@ class LanguageController extends Controller
             'app_locale' => App::getLocale()
         ]);
 
-        $redirectUrl = redirect()->back()->getTargetUrl();
-        $separator = strpos($redirectUrl, '?') !== false ? '&' : '?';
-        $redirectUrl .= $separator . 'lang=' . $locale . '&_ts=' . time();
-
-        return redirect($redirectUrl)->with('success', __('messages.language_changed'));
+        return redirect()->back()
+            ->with('success', trans('messages.language_changed', [], $locale))
+            ->with('_locale', $locale)
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0');
     }
 
     /**
@@ -91,7 +92,6 @@ class LanguageController extends Controller
 
         $availableLocales = config('locales.available_locales', []);
 
-        // Validate locale
         if (!array_key_exists($locale, $availableLocales)) {
             Log::warning("[v0] getTranslations: Invalid locale requested", [
                 'requested_locale' => $locale,
@@ -103,7 +103,6 @@ class LanguageController extends Controller
             ], 400);
         }
 
-        // Load translations from lang files
         $translationPath = resource_path("lang/{$locale}");
         
         if (!is_dir($translationPath)) {
@@ -116,7 +115,6 @@ class LanguageController extends Controller
             ], 404);
         }
 
-        // Load all translation files for this locale
         $translations = [];
         $files = glob($translationPath . '/*.php');
 
@@ -131,9 +129,47 @@ class LanguageController extends Controller
             'translation_keys' => array_keys($translations)
         ]);
 
-        // Return translations as JSON with cache headers
-        return response()->json($translations)
-            ->header('Cache-Control', 'public, max-age=3600')
+        $timestamp = time();
+        
+        return response()->json([
+            'locale' => $locale,
+            'timestamp' => $timestamp,
+            'translations' => $translations
+        ])
+            ->header('Cache-Control', 'no-cache, no-store, must-revalidate')
+            ->header('Pragma', 'no-cache')
+            ->header('Expires', '0')
             ->header('Content-Type', 'application/json; charset=utf-8');
+    }
+
+    /**
+     * Clear all language-related caches
+     */
+    private function clearLanguageCaches()
+    {
+        try {
+            Cache::forget('config');
+            Cache::forget('views');
+            Cache::forget('translations');
+            
+            foreach (array_keys(config('locales.available_locales', [])) as $loc) {
+                Cache::forget("translations.{$loc}");
+                Cache::forget("locale.{$loc}");
+            }
+            
+            if (method_exists(Cache::class, 'tags')) {
+                try {
+                    Cache::tags(['traceability', 'api', 'locale'])->flush();
+                } catch (\Exception $e) {
+                    // Silently fail if cache driver doesn't support tags
+                }
+            }
+            
+            Log::info("[v0] Language caches cleared successfully");
+        } catch (\Exception $e) {
+            Log::error("[v0] Failed to clear language caches", [
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 }

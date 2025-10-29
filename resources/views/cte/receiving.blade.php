@@ -14,12 +14,14 @@
             <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color);">
                 <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase;">{{ __('messages.basic_information') }}</h3>
                 
+                <!-- TLC is now auto-generated and displayed -->
                 <div class="form-group">
-                    <label class="form-label">{{ __('messages.tlc_traceability_lot_code') }} *</label>
-                    <input type="text" name="tlc" class="form-input" value="{{ old('tlc') }}" required placeholder="{{ __('messages.eg_rcv_2024_001') }}">
-                    @error('tlc')
-                        <small style="color: var(--danger);">{{ $message }}</small>
-                    @enderror
+                    <label class="form-label">{{ __('messages.tlc_traceability_lot_code') }} *
+                        <span style="color: var(--text-secondary); font-size: 0.75rem;">({{ __('messages.auto_generated') }})</span>
+                    </label>
+                    <!-- Display actual generated TLC, not placeholder text -->
+                    <input type="text" name="tlc" class="form-input" value="{{ $generatedTLC }}" readonly style="background: var(--bg-tertiary); cursor: not-allowed; font-family: monospace; font-weight: 600; color: var(--success);">
+                    <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">{{ __('messages.tlc_auto_generated_system') }}</small>
                 </div>
                 
                 <div class="form-group">
@@ -43,7 +45,6 @@
                             </option>
                         @endforeach
                     </select>
-                    <!-- Added debug info to show product count -->
                     <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">
                         {{ count($products) }} {{ __('messages.products_available') }}
                         @if(count($products) == 0)
@@ -76,7 +77,6 @@
                         @enderror
                     </div>
                     
-                    <!-- Fixed field name from quantity_unit to unit to match backend -->
                     <div class="form-group">
                         <label class="form-label">{{ __('messages.unit') }} *</label>
                         <select name="unit" class="form-select" required>
@@ -100,7 +100,6 @@
                 
                 <div class="form-group">
                     <label class="form-label">{{ __('messages.receiving_location') }} *</label>
-                    <!-- Added ID for JavaScript auto-population -->
                     <select name="location_id" id="locationSelect" class="form-select" required>
                         <option value="">{{ __('messages.select_location') }}</option>
                         @foreach($locations as $location)
@@ -117,20 +116,19 @@
                     @enderror
                 </div>
                 
-                <!-- Added ID for auto-population and validation feedback -->
+                <!-- GLN is now optional for Vietnam compliance -->
                 <div class="form-group">
                     <label class="form-label">{{ __('messages.receiving_location_gln') }} 
-                        <span style="color: var(--danger); font-size: 0.75rem;">{{ __('messages.required_for_fda_compliance') }}</span>
+                        <span style="color: var(--text-secondary); font-size: 0.75rem;">({{ __('messages.optional') }})</span>
                     </label>
-                    <input type="text" name="receiving_location_gln" id="locationGLN" class="form-input gln-input" value="{{ old('receiving_location_gln') }}" placeholder="{{ __('messages.global_location_number') }}" pattern="^\d{13}$" title="{{ __('messages.gln_must_be_13_digits') }}" maxlength="13">
-                    <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">{{ __('messages.gln_13_digits') }}</small>
+                    <input type="text" name="receiving_location_gln" id="locationGLN" class="form-input gln-input" value="{{ old('receiving_location_gln') }}" placeholder="{{ __('messages.global_location_number') }}" pattern="^\d{13}$|^$" title="{{ __('messages.gln_must_be_13_digits_or_empty') }}" maxlength="13">
+                    <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">{{ __('messages.gln_13_digits_or_leave_blank') }}</small>
                     <small id="glnValidation" style="display: none; margin-top: 0.25rem;"></small>
                     @error('receiving_location_gln')
                         <small style="color: var(--danger);">{{ $message }}</small>
                     @enderror
                 </div>
                 
-                <!-- Added ID for auto-population -->
                 <div class="form-group">
                     <label class="form-label">{{ __('messages.receiving_location_name') }}</label>
                     <input type="text" name="receiving_location_name" id="locationName" class="form-input" value="{{ old('receiving_location_name') }}" placeholder="{{ __('messages.full_location_name_fda') }}">
@@ -139,11 +137,12 @@
                 <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; border-left: 4px solid var(--info); margin-top: 1rem;">
                     <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; color: var(--info);">{{ __('messages.harvest_location_information') }}</h4>
                     
+                    <!-- Harvest location GLN is now optional -->
                     <div class="form-group">
                         <label class="form-label">{{ __('messages.harvest_location_gln') }}
-                            <span style="color: var(--text-secondary); font-size: 0.75rem;">({{ __('messages.optional_for_fresh_produce') }})</span>
+                            <span style="color: var(--text-secondary); font-size: 0.75rem;">({{ __('messages.optional') }})</span>
                         </label>
-                        <input type="text" name="harvest_location_gln" class="form-input gln-input" value="{{ old('harvest_location_gln') }}" placeholder="{{ __('messages.farm_or_harvest_location_gln') }}" pattern="^\d{13}$|^$" title="{{ __('messages.gln_must_be_13_digits') }}" maxlength="13">
+                        <input type="text" name="harvest_location_gln" class="form-input gln-input" value="{{ old('harvest_location_gln') }}" placeholder="{{ __('messages.farm_or_harvest_location_gln') }}" pattern="^\d{13}$|^$" title="{{ __('messages.gln_must_be_13_digits_or_empty') }}" maxlength="13">
                         <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">{{ __('messages.gln_13_digits_or_leave_blank') }}</small>
                         @error('harvest_location_gln')
                             <small style="color: var(--danger);">{{ $message }}</small>
@@ -166,7 +165,6 @@
                 
                 <div class="form-group">
                     <label class="form-label">{{ __('messages.supplier') }} *</label>
-                    <!-- Added ID for JavaScript auto-population -->
                     <select name="partner_id" id="partnerSelect" class="form-select" required>
                         <option value="">{{ __('messages.select_supplier') }}</option>
                         @foreach($suppliers as $supplier)
@@ -183,17 +181,18 @@
                     @enderror
                 </div>
                 
-                <!-- Added ID for auto-population -->
                 <div class="form-group">
                     <label class="form-label">{{ __('messages.business_name') }}</label>
                     <input type="text" name="business_name" id="businessName" class="form-input" value="{{ old('business_name') }}" placeholder="{{ __('messages.supplier_business_name') }}">
                 </div>
                 
-                <!-- Added ID for auto-population and validation -->
+                <!-- Business GLN is now optional for Vietnam compliance -->
                 <div class="form-group">
-                    <label class="form-label">{{ __('messages.business_gln') }}</label>
-                    <input type="text" name="business_gln" id="businessGLN" class="form-input gln-input" value="{{ old('business_gln') }}" placeholder="{{ __('messages.global_location_number') }}" pattern="^\d{13}$" title="{{ __('messages.gln_must_be_13_digits') }}" maxlength="13">
-                    <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">{{ __('messages.gln_13_digits') }}</small>
+                    <label class="form-label">{{ __('messages.business_gln') }}
+                        <span style="color: var(--text-secondary); font-size: 0.75rem;">({{ __('messages.optional') }})</span>
+                    </label>
+                    <input type="text" name="business_gln" id="businessGLN" class="form-input gln-input" value="{{ old('business_gln') }}" placeholder="{{ __('messages.global_location_number') }}" pattern="^\d{13}$|^$" title="{{ __('messages.gln_must_be_13_digits_or_empty') }}" maxlength="13">
+                    <small style="color: var(--text-secondary); display: block; margin-top: 0.25rem;">{{ __('messages.gln_13_digits_or_leave_blank') }}</small>
                     <small id="businessGlnValidation" style="display: none; margin-top: 0.25rem;"></small>
                     @error('business_gln')
                         <small style="color: var(--danger);">{{ $message }}</small>
@@ -211,7 +210,6 @@
                 <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase;">{{ __('messages.dates') }}</h3>
                 
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                    <!-- Added IDs for date validation -->
                     <div class="form-group">
                         <label class="form-label">{{ __('messages.harvest_date') }}</label>
                         <input type="date" name="harvest_date" id="harvestDate" class="form-input" value="{{ old('harvest_date') }}">
@@ -248,7 +246,6 @@
                     @enderror
                 </div>
                 
-                <!-- Added date validation feedback -->
                 <div id="dateValidation" style="display: none; padding: 0.75rem; border-radius: 0.375rem; margin-top: 0.5rem;"></div>
             </div>
 
@@ -256,7 +253,6 @@
             <div style="margin-bottom: 1.5rem;">
                 <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 1rem; text-transform: uppercase;">{{ __('messages.reference_compliance') }}</h3>
                 
-                <!-- Made reference_doc required with indicator -->
                 <div class="form-group">
                     <label class="form-label">{{ __('messages.reference_document_po_invoice_bol') }} *
                         <span style="color: var(--danger); font-size: 0.75rem;">{{ __('messages.required_for_fda_compliance') }}</span>
@@ -295,7 +291,6 @@
                 </div>
             </div>
             
-            <!-- Enhanced validation info box -->
             <div style="margin-bottom: 1.5rem; padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; border-left: 4px solid var(--info);">
                 <h4 style="font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--info);">{{ __('messages.date_sequence_validation') }}</h4>
                 <p style="font-size: 0.8rem; color: var(--text-secondary); margin: 0;">
@@ -303,7 +298,6 @@
                 </p>
             </div>
             
-            <!-- Conditional E-Signature section - only show for Enterprise users -->
             @if(auth()->user()->hasFeature('e_signatures'))
                 <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--warning-bg); border-radius: 0.5rem; border-left: 4px solid var(--warning);">
                     <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--warning); margin-bottom: 1rem; text-transform: uppercase;">
@@ -334,7 +328,6 @@
                     </div>
                 </div>
             @else
-                <!-- Upgrade prompt for non-Enterprise users -->
                 <div style="margin-bottom: 1.5rem; padding: 1.5rem; background: var(--info-bg); border-radius: 0.5rem; border-left: 4px solid var(--info);">
                     <h3 style="font-size: 0.875rem; font-weight: 600; color: var(--info); margin-bottom: 0.5rem; text-transform: uppercase;">
                         {{ __('messages.e_signatures_available_in_enterprise') }}
@@ -350,7 +343,6 @@
                 </div>
             @endif
             
-            <!-- Dynamic button text based on package -->
             <button type="submit" class="btn btn-primary" id="submitBtn" style="width: 100%;">
                 @if(auth()->user()->hasFeature('e_signatures'))
                     {{ __('messages.record_receiving_with_signature') }}
@@ -368,25 +360,29 @@
             @forelse($recentEvents as $event)
             <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; {{ (isset($event->status) && $event->status === 'voided') || (isset($event->is_voided) && $event->is_voided) ? 'opacity: 0.6; border: 2px dashed var(--danger);' : '' }}">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <strong>{{ $event->traceRecord->tlc }}</strong>
+                    <strong>{{ $event->traceRecord?->tlc ?? 'N/A' }}</strong>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <span class="badge badge-success">{{ __('messages.receiving') }}</span>
-                        {{-- Check status property instead of is_voided to avoid undefined property error --}}
                         @if(isset($event->status) && $event->status === 'voided')
                             <span class="badge badge-danger">{{ __('messages.voided') }}</span>
                         @endif
                     </div>
                 </div>
                 <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                    {{ $event->traceRecord->product->product_name }}<br>
-                    {{ $event->traceRecord->quantity }} {{ $event->traceRecord->unit }}<br>
-                    {{ __('messages.from') }}: {{ $event->partner->partner_name }}<br>
+                    @if($event->traceRecord?->product)
+                        {{ $event->traceRecord->product->product_name }}<br>
+                        {{ $event->traceRecord->quantity }} {{ $event->traceRecord->unit }}<br>
+                    @else
+                        <span style="color: var(--danger);">{{ __('messages.product_deleted') }}</span><br>
+                        {{ $event->traceRecord?->quantity ?? 'N/A' }} {{ $event->traceRecord?->unit ?? '' }}<br>
+                    @endif
+                    {{ __('messages.from') }}: {{ $event->partner?->partner_name ?? 'N/A' }}<br>
                     {{ $event->event_date->format('Y-m-d H:i') }}
                     
                     @if(isset($event->status) && $event->status === 'voided')
                         <br>
                         <span style="color: var(--danger); font-weight: 600;">
-                            {{ __('messages.voided_by') }}: {{ $event->voidedBy->full_name ?? 'System' }}<br>
+                            {{ __('messages.voided_by') }}: {{ $event->voidedBy?->full_name ?? 'System' }}<br>
                             {{ __('messages.voided_at') }}: {{ $event->voided_at ? $event->voided_at->format('Y-m-d H:i') : 'N/A' }}
                         </span>
                     @endif
@@ -397,12 +393,10 @@
                         $canVoid = false;
                         $voidReason = '';
                         
-                        // Admin can always void
                         if(auth()->user()->role === 'Admin') {
                             $canVoid = true;
                             $voidReason = __('messages.admin_only');
                         }
-                        // Within 2 hours for non-admin
                         elseif($event->created_at->diffInHours(now()) < 2) {
                             $canVoid = true;
                             $voidReason = __('messages.within_2_hours');
@@ -416,7 +410,7 @@
                                     class="btn btn-sm btn-danger void-event-btn" 
                                     data-event-id="{{ $event->id }}"
                                     data-event-type="receiving"
-                                    data-tlc="{{ $event->traceRecord->tlc }}"
+                                    data-tlc="{{ $event->traceRecord?->tlc ?? 'N/A' }}"
                                     style="margin-top: 0.5rem; font-size: 0.75rem;">
                                 {{ __('messages.void_event') }}
                             </button>
@@ -427,7 +421,6 @@
                         </small>
                     @endif
                 @elseif(($event->void_count ?? 0) >= 1)
-                    {{-- Show message when event has already been voided once --}}
                     <small style="display: block; margin-top: 0.5rem; color: var(--danger); font-weight: 600;">
                         {{ __('messages.event_already_voided_once') }}
                     </small>
@@ -442,11 +435,8 @@
     </div>
 </div>
 
-<!-- Added JavaScript for auto-population and validation -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[v0] Receiving form JavaScript initialized');
-    
     const locationSelect = document.getElementById('locationSelect');
     const locationGLN = document.getElementById('locationGLN');
     const locationName = document.getElementById('locationName');
@@ -457,92 +447,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const businessName = document.getElementById('businessName');
     const businessGlnValidation = document.getElementById('businessGlnValidation');
     
-    const productSelect = document.getElementById('productSelect');
-    
-    console.log('[v0] Dropdown elements found:', {
-        locationSelect: !!locationSelect,
-        partnerSelect: !!partnerSelect,
-        productSelect: !!productSelect,
-        locationOptions: locationSelect ? locationSelect.options.length : 0,
-        partnerOptions: partnerSelect ? partnerSelect.options.length : 0,
-        productOptions: productSelect ? productSelect.options.length : 0
-    });
-    
-    if (locationSelect) {
-        console.log('[v0] Location select disabled:', locationSelect.disabled);
-        console.log('[v0] Location select options:', Array.from(locationSelect.options).map(opt => ({
-            value: opt.value,
-            text: opt.text
-        })));
-    }
-    
-    if (partnerSelect) {
-        console.log('[v0] Partner select disabled:', partnerSelect.disabled);
-        console.log('[v0] Partner select options:', Array.from(partnerSelect.options).map(opt => ({
-            value: opt.value,
-            text: opt.text
-        })));
-    }
-    
-    if (productSelect) {
-        console.log('[v0] Product select disabled:', productSelect.disabled);
-        console.log('[v0] Product select options:', Array.from(productSelect.options).map(opt => ({
-            value: opt.value,
-            text: opt.text
-        })));
-    }
-    
     const harvestDate = document.getElementById('harvestDate');
     const packDate = document.getElementById('packDate');
     const eventDate = document.getElementById('eventDate');
     const dateValidation = document.getElementById('dateValidation');
-    const submitBtn = document.getElementById('submitBtn');
     
-    // Void functionality
-    const voidModal = document.getElementById('voidModal');
-    const voidForm = document.getElementById('voidForm');
-    const voidEventType = document.getElementById('voidEventType');
-    let currentEventId = null;
-    let currentEventType = null;
-
-    document.querySelectorAll('.void-event-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            currentEventId = this.dataset.eventId;
-            currentEventType = this.dataset.eventType;
-            const tlc = this.dataset.tlc;
-            
-            voidEventType.value = currentEventType;
-            
-            voidForm.action = `/cte/${currentEventType}/${currentEventId}/void`;
-            
-            voidModal.style.display = 'flex';
-        });
-    });
-
-    function closeVoidModal() {
-        voidModal.style.display = 'none';
-        voidForm.reset();
-        currentEventId = null;
-        currentEventType = null;
-    }
-
-    voidModal.addEventListener('click', function(e) {
-        if (e.target === voidModal) {
-            closeVoidModal();
-        }
-    });
-
-    voidForm.addEventListener('submit', function(e) {
-        if (!confirm('{{ __("messages.void_confirmation") }}')) {
-            e.preventDefault();
-        }
-    });
-
-    // Auto-populate location fields
     if (locationSelect) {
         locationSelect.addEventListener('change', function() {
-            console.log('[v0] Location changed:', this.value);
             const selectedOption = this.options[this.selectedIndex];
             if (selectedOption.value) {
                 locationGLN.value = selectedOption.dataset.gln || '';
@@ -555,10 +466,8 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Auto-populate partner fields
     if (partnerSelect) {
         partnerSelect.addEventListener('change', function() {
-            console.log('[v0] Partner changed:', this.value);
             const selectedOption = this.options[this.selectedIndex];
             if (selectedOption.value) {
                 businessGLN.value = selectedOption.dataset.gln || '';
@@ -571,15 +480,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Auto-populate product fields
-    if (productSelect) {
-        productSelect.addEventListener('change', function() {
-            console.log('[v0] Product changed:', this.value);
-            // Additional logic for product auto-population can be added here if needed
-        });
-    }
-    
-    // GLN validation function
     function validateGLN(input, feedback) {
         const value = input.value.trim();
         if (value === '') {
@@ -600,7 +500,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // GLN input validation
     locationGLN.addEventListener('input', function() {
         validateGLN(this, glnValidation);
     });
@@ -609,7 +508,6 @@ document.addEventListener('DOMContentLoaded', function() {
         validateGLN(this, businessGlnValidation);
     });
     
-    // Date sequence validation
     function validateDateSequence() {
         const harvest = harvestDate.value;
         const pack = packDate.value;
@@ -645,7 +543,6 @@ document.addEventListener('DOMContentLoaded', function() {
     packDate.addEventListener('change', validateDateSequence);
     eventDate.addEventListener('change', validateDateSequence);
     
-    // Form submission validation
     document.getElementById('receivingForm').addEventListener('submit', function(e) {
         if (!validateDateSequence()) {
             e.preventDefault();
@@ -656,7 +553,6 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<!-- Added void confirmation modal -->
 <div id="voidModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center;">
     <div style="background: var(--bg-primary); border-radius: 0.5rem; padding: 2rem; max-width: 500px; width: 90%;">
         <h3 style="font-size: 1.25rem; font-weight: 600; margin-bottom: 1rem;">{{ __('messages.void_event') }}</h3>
@@ -691,7 +587,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 <textarea name="void_notes" class="form-textarea" rows="3" required placeholder="{{ __('messages.describe_what_changed') }}"></textarea>
             </div>
             
-            <!-- Added signature password field -->
             <div class="form-group" style="padding: 1rem; background: var(--warning-bg); border-radius: 0.375rem;">
                 <label class="form-label" style="color: var(--warning);">{{ __('messages.password_for_signature') }} *</label>
                 <input type="password" name="signature_password" class="form-input" required placeholder="{{ __('messages.enter_your_password') }}">

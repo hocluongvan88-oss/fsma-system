@@ -68,6 +68,7 @@ class AuditLogService
             'new_values' => $newValues,
             'ip_address' => Request::ip(),
             'user_agent' => Request::userAgent(),
+            'organization_id' => Auth::user()?->organization_id,
             'created_at' => now(),
         ]);
     }

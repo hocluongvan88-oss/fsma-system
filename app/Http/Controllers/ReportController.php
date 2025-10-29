@@ -59,9 +59,14 @@ class ReportController extends Controller
 
         $records = $query->latest()->paginate(20);
 
-        // Get filter options
-        $products = Product::ftl()->orderBy('product_name')->get();
-        $locations = \App\Models\Location::orderBy('location_name')->get();
+        $products = Product::ftl()
+            ->forOrganization(auth()->user()->organization_id)
+            ->orderBy('product_name')
+            ->get();
+        
+        $locations = \App\Models\Location::forOrganization(auth()->user()->organization_id)
+            ->orderBy('location_name')
+            ->get();
 
         return view('reports.traceability', compact('records', 'products', 'locations'));
     }
@@ -76,8 +81,9 @@ class ReportController extends Controller
         $tlc = $validated['tlc'];
         $direction = $validated['direction'];
 
-        // Find the trace record
-        $traceRecord = TraceRecord::where('tlc', $tlc)->first();
+        $traceRecord = TraceRecord::where('tlc', $tlc)
+            ->where('organization_id', auth()->user()->organization_id)
+            ->first();
 
         if (!$traceRecord) {
             return back()->with('error', 'TLC not found: ' . $tlc);
@@ -90,6 +96,7 @@ class ReportController extends Controller
             'user_id' => auth()->id(),
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
+            'organization_id' => auth()->user()->organization_id,
         ]);
 
         $results = [
@@ -110,8 +117,8 @@ class ReportController extends Controller
             $results['forward'] = $forwardData['chain'];
         }
 
-        // Get all CTE events for this TLC
         $results['events'] = CTEEvent::where('trace_record_id', $traceRecord->id)
+            ->where('organization_id', auth()->user()->organization_id)
             ->with(['location', 'partner', 'creator'])
             ->orderBy('event_date')
             ->get();
@@ -129,7 +136,9 @@ class ReportController extends Controller
         ]);
 
         $tlc = $validated['tlc'];
-        $traceRecord = TraceRecord::where('tlc', $tlc)->first();
+        $traceRecord = TraceRecord::where('tlc', $tlc)
+            ->where('organization_id', auth()->user()->organization_id)
+            ->first();
 
         if (!$traceRecord) {
             return back()->with('error', 'TLC not found');
@@ -200,7 +209,9 @@ class ReportController extends Controller
         ]);
 
         $tlc = $validated['tlc'];
-        $traceRecord = TraceRecord::where('tlc', $tlc)->with(['product', 'location'])->first();
+        $traceRecord = TraceRecord::where('tlc', $tlc)
+            ->where('organization_id', auth()->user()->organization_id)
+            ->with(['product', 'location'])->first();
 
         if (!$traceRecord) {
             return back()->with('error', 'TLC not found');
@@ -225,6 +236,7 @@ class ReportController extends Controller
         }
 
         $results['events'] = CTEEvent::where('trace_record_id', $traceRecord->id)
+            ->where('organization_id', auth()->user()->organization_id)
             ->with(['location', 'partner', 'creator'])
             ->orderBy('event_date')
             ->get();
@@ -241,8 +253,8 @@ class ReportController extends Controller
         $dateFrom = $request->input('date_from', now()->subDays(30)->format('Y-m-d'));
         $dateTo = $request->input('date_to', now()->format('Y-m-d'));
 
-        // Query statistics
         $queryStats = TraceabilityAnalytics::whereBetween('created_at', [$dateFrom, $dateTo])
+            ->where('organization_id', auth()->user()->organization_id)
             ->select(
                 DB::raw('COUNT(*) as total_queries'),
                 DB::raw('COUNT(DISTINCT trace_record_id) as unique_records'),
@@ -253,8 +265,8 @@ class ReportController extends Controller
             )
             ->first();
 
-        // Queries by day
         $queriesByDay = TraceabilityAnalytics::whereBetween('created_at', [$dateFrom, $dateTo])
+            ->where('organization_id', auth()->user()->organization_id)
             ->select(
                 DB::raw('DATE(created_at) as date'),
                 DB::raw('COUNT(*) as count')
@@ -263,8 +275,8 @@ class ReportController extends Controller
             ->orderBy('date')
             ->get();
 
-        // Most queried products
         $topProducts = TraceabilityAnalytics::whereBetween('traceability_analytics.created_at', [$dateFrom, $dateTo])
+            ->where('traceability_analytics.organization_id', auth()->user()->organization_id)
             ->join('trace_records', 'traceability_analytics.trace_record_id', '=', 'trace_records.id')
             ->join('products', 'trace_records.product_id', '=', 'products.id')
             ->select(
@@ -276,14 +288,14 @@ class ReportController extends Controller
             ->limit(10)
             ->get();
 
-        // Query types distribution
         $queryTypes = TraceabilityAnalytics::whereBetween('created_at', [$dateFrom, $dateTo])
+            ->where('organization_id', auth()->user()->organization_id)
             ->select('query_type', DB::raw('COUNT(*) as count'))
             ->groupBy('query_type')
             ->get();
 
-        // Direction distribution
         $directions = TraceabilityAnalytics::whereBetween('created_at', [$dateFrom, $dateTo])
+            ->where('organization_id', auth()->user()->organization_id)
             ->select('direction', DB::raw('COUNT(*) as count'))
             ->groupBy('direction')
             ->get();
@@ -301,31 +313,32 @@ class ReportController extends Controller
 
     public function compliance()
     {
-        // Compliance statistics
         $stats = [
-            'total_products' => Product::ftl()->count(),
-            'total_trace_records' => TraceRecord::count(),
-            'active_records' => TraceRecord::active()->count(),
-            'total_cte_events' => CTEEvent::count(),
-            'receiving_events' => CTEEvent::receiving()->count(),
-            'transformation_events' => CTEEvent::transformation()->count(),
-            'shipping_events' => CTEEvent::shipping()->count(),
-            'audit_logs_count' => AuditLog::count(),
-            'recent_audit_logs' => AuditLog::recent(30)->count(),
+            'total_products' => Product::ftl()
+                ->where('organization_id', auth()->user()->organization_id)
+                ->count(),
+            'total_trace_records' => TraceRecord::where('organization_id', auth()->user()->organization_id)->count(),
+            'active_records' => TraceRecord::where('organization_id', auth()->user()->organization_id)->active()->count(),
+            'total_cte_events' => CTEEvent::where('organization_id', auth()->user()->organization_id)->count(),
+            'receiving_events' => CTEEvent::where('organization_id', auth()->user()->organization_id)->receiving()->count(),
+            'transformation_events' => CTEEvent::where('organization_id', auth()->user()->organization_id)->transformation()->count(),
+            'shipping_events' => CTEEvent::where('organization_id', auth()->user()->organization_id)->shipping()->count(),
+            'audit_logs_count' => AuditLog::where('organization_id', auth()->user()->organization_id)->count(),
+            'recent_audit_logs' => AuditLog::where('organization_id', auth()->user()->organization_id)->recent(30)->count(),
         ];
 
-        // Events by month (last 12 months)
-        $eventsByMonth = CTEEvent::select(
-                DB::raw('DATE_FORMAT(event_date, "%Y-%m") as month'),
-                DB::raw('COUNT(*) as count')
-            )
-            ->where('event_date', '>=', now()->subMonths(12))
-            ->groupBy('month')
-            ->orderBy('month')
-            ->get();
+        $eventsByMonth = CTEEvent::where('organization_id', auth()->user()->organization_id)
+                ->select(
+                    DB::raw('DATE_FORMAT(event_date, "%Y-%m") as month'),
+                    DB::raw('COUNT(*) as count')
+                )
+                ->where('event_date', '>=', now()->subMonths(12))
+                ->groupBy('month')
+                ->orderBy('month')
+                ->get();
 
-        // Products without recent activity
         $inactiveProducts = Product::ftl()
+            ->where('organization_id', auth()->user()->organization_id)
             ->whereDoesntHave('traceRecords', function($query) {
                 $query->where('created_at', '>=', now()->subDays(90));
             })

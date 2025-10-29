@@ -84,7 +84,18 @@ class ExportVerificationController extends Controller
     public function listExports(Request $request)
     {
         $limit = $request->query('limit', 20);
-        $exports = ExportLog::recentFirst()->limit($limit)->get();
+        
+        $currentUser = auth()->user();
+        
+        $exports = ExportLog::where(function($query) use ($currentUser) {
+            $query->where('user_id', $currentUser->id)
+                ->orWhereHas('user', function($q) use ($currentUser) {
+                    $q->where('organization_id', $currentUser->organization_id);
+                });
+        })
+        ->recentFirst()
+        ->limit($limit)
+        ->get();
 
         return response()->json([
             'success' => true,

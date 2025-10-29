@@ -16,17 +16,20 @@
     
     <div class="language-dropdown" id="languageDropdown" style="display: none;">
         @foreach($availableLocales as $code => $locale)
-            <a href="{{ route('language.switch', $code) }}" 
-               class="language-option {{ $currentLocale === $code ? 'active' : '' }}"
-               data-locale="{{ $code }}">
-                <span class="language-flag">{{ $locale['flag'] }}</span>
-                <span class="language-name">{{ $locale['name'] }}</span>
-                @if($currentLocale === $code)
-                    <svg class="language-check" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="3 8 6 11 13 4"></polyline>
-                    </svg>
-                @endif
-            </a>
+            <form method="GET" action="{{ route('language.switch', $code) }}" style="display: contents;">
+                <button type="submit" 
+                   class="language-option {{ $currentLocale === $code ? 'active' : '' }}"
+                   data-locale="{{ $code }}"
+                   style="border: none; background: none; padding: 0; width: 100%; text-align: left;">
+                    <span class="language-flag">{{ $locale['flag'] }}</span>
+                    <span class="language-name">{{ $locale['name'] }}</span>
+                    @if($currentLocale === $code)
+                        <svg class="language-check" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="3 8 6 11 13 4"></polyline>
+                        </svg>
+                    @endif
+                </button>
+            </form>
         @endforeach
     </div>
 </div>
@@ -62,11 +65,12 @@
             btn.disabled = true;
             btn.style.opacity = '0.6';
             
-            // Add a small delay to ensure session is saved before navigation
-            setTimeout(() => {
-                // Let the browser navigate to the href naturally
-                // The route will set session and redirect back with cache-busting parameter
-            }, 100);
+            const form = option.closest('form');
+            if (form) {
+                const url = new URL(form.action);
+                url.searchParams.set('_t', Date.now());
+                form.action = url.toString();
+            }
         });
     });
 })();

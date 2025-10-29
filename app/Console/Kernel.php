@@ -26,6 +26,8 @@ class Kernel extends ConsoleKernel
         // Cleanup expired sessions
         $schedule->command('session:gc')->daily();
 
+        $schedule->command('documents:check-expiry --days=30')->dailyAt('09:00');
+
         $schedule->call(function () {
             $certificates = \App\Models\DigitalCertificate::active()->get();
             foreach ($certificates as $cert) {

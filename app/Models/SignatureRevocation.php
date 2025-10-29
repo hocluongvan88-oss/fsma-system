@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\HasOrganizationScope;
 
 class SignatureRevocation extends Model
 {
+    use HasOrganizationScope;
+
     protected $fillable = [
         'signature_id',
         'revoked_by_user_id',

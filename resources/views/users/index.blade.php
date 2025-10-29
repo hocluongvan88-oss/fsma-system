@@ -64,6 +64,8 @@
                     <th>{{ __('messages.username') }}</th>
                     <th>{{ __('messages.full_name') }}</th>
                     <th>{{ __('messages.email') }}</th>
+                    {{-- Add organization column --}}
+                    <th>{{ __('messages.organization') }}</th>
                     <th>{{ __('messages.role') }}</th>
                     <th>{{ __('messages.status') }}</th>
                     <th>{{ __('messages.last_login') }}</th>
@@ -76,6 +78,14 @@
                     <td>{{ $user->username }}</td>
                     <td>{{ $user->full_name }}</td>
                     <td>{{ $user->email }}</td>
+                    {{-- Display organization name --}}
+                    <td>
+                        @if($user->organization)
+                            <span style="font-size: 0.875rem;">{{ $user->organization->name }}</span>
+                        @else
+                            <span style="color: var(--text-muted); font-size: 0.875rem;">-</span>
+                        @endif
+                    </td>
                     <td>
                         <span class="badge badge-info">{{ ucfirst($user->role) }}</span>
                     </td>
@@ -119,7 +129,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" style="text-align: center; color: var(--text-muted);">{{ __('messages.no_users_found') }}</td>
+                    <td colspan="8" style="text-align: center; color: var(--text-muted);">{{ __('messages.no_users_found') }}</td>
                 </tr>
                 @endforelse
             </tbody>

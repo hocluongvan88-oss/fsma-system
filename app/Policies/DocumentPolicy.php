@@ -12,11 +12,11 @@ class DocumentPolicy
      */
     public function view(User $user, Document $document): bool
     {
-        // Admin can view any document
         if ($user->isAdmin()) {
             return true;
         }
 
+        // Organization Admin must be in same org
         return $user->organization_id === $document->organization_id;
     }
 
@@ -33,16 +33,16 @@ class DocumentPolicy
      */
     public function update(User $user, Document $document): bool
     {
-        // Admin can update any document
         if ($user->isAdmin()) {
             return true;
         }
 
+        // Check organization isolation first
         if ($user->organization_id !== $document->organization_id) {
             return false;
         }
 
-        // Only manager and admin can update
+        // Only manager and admin can update within their org
         return $user->isManager();
     }
 
@@ -51,16 +51,16 @@ class DocumentPolicy
      */
     public function delete(User $user, Document $document): bool
     {
-        // Admin can delete any document
         if ($user->isAdmin()) {
             return true;
         }
 
+        // Check organization isolation first
         if ($user->organization_id !== $document->organization_id) {
             return false;
         }
 
-        // Only manager and admin can delete
+        // Only manager and admin can delete within their org
         return $user->isManager();
     }
 
@@ -69,16 +69,16 @@ class DocumentPolicy
      */
     public function approve(User $user, Document $document): bool
     {
-        // Admin can approve any document
         if ($user->isAdmin()) {
             return true;
         }
 
+        // Check organization isolation first
         if ($user->organization_id !== $document->organization_id) {
             return false;
         }
 
-        // Only manager and admin can approve
+        // Only manager and admin can approve within their org
         return $user->isManager();
     }
 
@@ -87,11 +87,11 @@ class DocumentPolicy
      */
     public function download(User $user, Document $document): bool
     {
-        // Admin can download any document
         if ($user->isAdmin()) {
             return true;
         }
 
+        // Must be in same organization
         return $user->organization_id === $document->organization_id;
     }
 }

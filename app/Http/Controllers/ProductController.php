@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Services\SKUGenerationService;
 use Illuminate\Http\Request;
 
 class ProductController extends BaseController
@@ -11,7 +12,6 @@ class ProductController extends BaseController
     {
         $query = Product::query();
 
-        // Search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
@@ -21,12 +21,10 @@ class ProductController extends BaseController
             });
         }
 
-        // Filter by FTL
         if ($request->filled('ftl')) {
             $query->where('is_ftl', $request->ftl === 'yes');
         }
 
-        // Filter by category
         if ($request->filled('category')) {
             $query->where('category', $request->category);
         }
@@ -45,7 +43,7 @@ class ProductController extends BaseController
     public function store(Request $request)
     {
         $validated = $this->validateWithLocale($request, [
-            'sku' => 'required|string|max:50|unique:products',
+            'sku' => 'nullable|string|max:50',
             'product_name' => 'required|string|max:200',
             'description' => 'nullable|string',
             'is_ftl' => 'boolean',
@@ -53,7 +51,19 @@ class ProductController extends BaseController
             'unit_of_measure' => 'required|string|max:20',
         ]);
 
+        if (auth()->check() && auth()->user()->organization_id) {
+            $validated['organization_id'] = auth()->user()->organization_id;
+        } else {
+            return back()->withErrors(['error' => 'User must belong to an organization to create products.']);
+        }
+
+        if (empty($validated['sku'])) {
+            $validated['sku'] = SKUGenerationService::generateUniqueSKU(auth()->user()->organization_id);
+        }
+
         $product = Product::create($validated);
+
+        \App\Services\QueryOptimizationService::clearOrganizationCache(auth()->user()->organization_id);
 
         return redirect()->route('master-data.products.index')
             ->with('success', $this->getLocalizedSuccessMessage('product_created_successfully'));
@@ -61,6 +71,8 @@ class ProductController extends BaseController
 
     public function show(Product $product)
     {
+        $this->authorizeProductAccess($product);
+
         $product->load(['traceRecords' => function($query) {
             $query->latest()->take(10);
         }]);
@@ -70,11 +82,15 @@ class ProductController extends BaseController
 
     public function edit(Product $product)
     {
+        $this->authorizeProductAccess($product);
+
         return view('master-data.products.edit', compact('product'));
     }
 
     public function update(Request $request, Product $product)
     {
+        $this->authorizeProductAccess($product);
+
         $validated = $this->validateWithLocale($request, [
             'sku' => 'required|string|max:50|unique:products,sku,' . $product->id,
             'product_name' => 'required|string|max:200',
@@ -86,18 +102,31 @@ class ProductController extends BaseController
 
         $product->update($validated);
 
+        \App\Services\QueryOptimizationService::clearOrganizationCache(auth()->user()->organization_id);
+
         return redirect()->route('master-data.products.index')
             ->with('success', $this->getLocalizedSuccessMessage('product_updated_successfully'));
     }
 
     public function destroy(Product $product)
     {
+        $this->authorizeProductAccess($product);
+
         try {
             $product->delete();
             return redirect()->route('master-data.products.index')
                 ->with('success', 'Product deleted successfully.');
         } catch (\Exception $e) {
             return back()->with('error', 'Cannot delete product with existing trace records.');
+        }
+    }
+
+    private function authorizeProductAccess(Product $product)
+    {
+        $user = auth()->user();
+        
+        if (!$user || ($product->organization_id !== $user->organization_id && !$user->isAdmin())) {
+            abort(403, 'Unauthorized access to this product.');
         }
     }
 }

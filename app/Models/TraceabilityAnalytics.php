@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
 
 class TraceabilityAnalytics extends Model
 {
+    use HasOrganizationScope;
+
     protected $fillable = [
         'trace_record_id',
         'query_type',

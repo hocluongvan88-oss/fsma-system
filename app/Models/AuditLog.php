@@ -2,16 +2,24 @@
 
 namespace App\Models;
 
+use App\Traits\HasOrganizationScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AuditLog extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     public $timestamps = false;
 
-    protected $fillable = [];
+    protected $fillable = [
+        'organization_id',
+        'user_id',
+        'action',
+        'table_name',
+        'record_id',
+        'integrity_hash',
+    ];
     protected $guarded = ['*'];
 
     protected $appends = ['integrity_hash'];
@@ -27,6 +35,20 @@ class AuditLog extends Model
     {
         parent::boot();
 
+        static::creating(function ($model) {
+            if (!$model->organization_id && auth()->check()) {
+                $model->organization_id = auth()->user()->organization_id;
+            }
+            
+            $model->integrity_hash = hash('sha256', json_encode([
+                $model->user_id,
+                $model->action,
+                $model->table_name,
+                $model->record_id,
+                $model->created_at ?? now(),
+            ]));
+        });
+
         // Prevent updates to audit logs
         static::updating(function ($model) {
             throw new \Exception('Audit logs are immutable and cannot be modified');
@@ -35,16 +57,6 @@ class AuditLog extends Model
         // Prevent deletion of audit logs
         static::deleting(function ($model) {
             throw new \Exception('Audit logs are immutable and cannot be deleted');
-        });
-
-        static::creating(function ($log) {
-            $log->integrity_hash = hash('sha256', json_encode([
-                $log->user_id,
-                $log->action,
-                $log->table_name,
-                $log->record_id,
-                $log->created_at ?? now(),
-            ]));
         });
     }
 
@@ -55,12 +67,14 @@ class AuditLog extends Model
         $log->action = $data['action'];
         $log->table_name = $data['table_name'] ?? null;
         $log->record_id = $data['record_id'] ?? null;
+        $log->organization_id = $data['organization_id'] ?? auth()->user()?->organization_id;
         $log->created_at = $data['created_at'] ?? now();
         $log->save();
 
         if (isset($data['old_values']) || isset($data['new_values']) || isset($data['ip_address']) || isset($data['user_agent'])) {
             \DB::table('audit_logs_details')->insert([
                 'audit_log_id' => $log->id,
+                'organization_id' => $log->organization_id,
                 'ip_address' => $data['ip_address'] ?? null,
                 'user_agent' => $data['user_agent'] ?? null,
                 'old_values' => isset($data['old_values']) ? json_encode($data['old_values']) : null,

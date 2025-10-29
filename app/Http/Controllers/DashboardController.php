@@ -2,79 +2,94 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
-use App\Models\Location;
-use App\Models\Partner;
+use App\Models\User;
+use App\Models\Organization;
 use App\Models\TraceRecord;
 use App\Models\CTEEvent;
-use App\Models\ESignature;
-use App\Models\User;
+use App\Models\Document;
+use App\Models\Package;
 use Illuminate\Support\Facades\DB;
 
-class DashboardController extends Controller
+class DashboardController extends BaseController
 {
     public function index()
     {
         $user = auth()->user();
         
-        $packageNames = [
-            'free' => 'Free Tier',
-            'basic' => 'Basic',
-            'premium' => 'Premium',
-            'enterprise' => 'Enterprise',
-        ];
-        
-        $stats = [
-            'total_products' => Product::count(),
-            'ftl_products' => Product::ftl()->count(),
-            'total_locations' => Location::count(),
-            'total_partners' => Partner::count(),
-            'active_inventory' => TraceRecord::active()->count(),
-            'total_inventory_qty' => (float) TraceRecord::active()->sum('quantity'),
-            'recent_events' => CTEEvent::with(['traceRecord.product', 'location', 'creator'])
-                ->latest('event_date')
-                ->take(10)
-                ->get(),
-            'recent_signatures' => ESignature::where('created_at', '>', now()->subDays(30))
-                ->count(),
-        ];
+        if ($user->isSystemAdmin()) {
+            return redirect()->route('admin.system-dashboard');
+        }
 
-        $cteUsage = (int) $user->getCteUsageThisMonth();
-        $cteLimit = (int) ($user->max_cte_records_monthly ?: 999999);
-        $documentCount = (int) $user->getDocumentCount();
-        $documentLimit = (int) ($user->max_documents ?: 999999);
-        $userCount = (int) $user->getActiveUserCount();
-        $userLimit = (int) ($user->max_users ?: 999999);
+        $organization = $user->organization;
         
-        // Calculate percentage safely
-        $ctePercentage = $cteLimit > 0 ? ($cteUsage / $cteLimit) * 100 : 0;
+        if (!$organization) {
+            return view('dashboard', [
+                'stats' => [
+                    'total_products' => 0,
+                    'ftl_products' => 0,
+                    'active_inventory' => 0,
+                    'total_inventory_qty' => 0,
+                    'total_locations' => 0,
+                    'total_partners' => 0,
+                    'recent_events' => []
+                ],
+                'packageStats' => [
+                    'package_name' => 'N/A',
+                    'cte_usage' => 0,
+                    'cte_limit' => 0,
+                    'cte_percentage' => 0,
+                    'show_warning' => false,
+                    'document_count' => 0,
+                    'document_limit' => 0,
+                    'user_count' => 0,
+                    'user_limit' => 0
+                ]
+            ]);
+        }
 
+        $userPackage = $user->userPackage;
+        $package = $userPackage?->package;
+        
+        $cteCount = CTEEvent::where('organization_id', $organization->id)->count();
+        $documentCount = Document::where('organization_id', $organization->id)->count();
+        $userCount = User::where('organization_id', $organization->id)->count();
+        
+        $cteLimit = $package?->cte_limit ?? 0;
+        $documentLimit = $package?->document_limit ?? 0;
+        $userLimit = $package?->user_limit ?? 0;
+        
+        $ctePercentage = $cteLimit > 0 ? ($cteCount / $cteLimit) * 100 : 0;
+        
         $packageStats = [
-            'package_name' => $packageNames[$user->package_id] ?? strtoupper($user->package_id),
-            'package_slug' => $user->package_id,
-            'cte_usage' => $cteUsage,
+            'package_name' => $package?->package_name ?? 'Free',
+            'cte_usage' => $cteCount,
             'cte_limit' => $cteLimit,
             'cte_percentage' => $ctePercentage,
+            'show_warning' => $ctePercentage >= 80,
             'document_count' => $documentCount,
             'document_limit' => $documentLimit,
             'user_count' => $userCount,
-            'user_limit' => $userLimit,
-            'show_warning' => $ctePercentage >= 80,
-            'can_upgrade' => !in_array($user->package_id, ['enterprise']),
+            'user_limit' => $userLimit
         ];
 
-        // Events by type for chart
-        $eventsByType = CTEEvent::select('event_type', DB::raw('count(*) as count'))
-            ->groupBy('event_type')
-            ->pluck('count', 'event_type')
-            ->toArray();
+        $stats = [
+            'total_products' => $organization->products()->count(),
+            'ftl_products' => $organization->products()->where('is_ftl', true)->count(),
+            'active_inventory' => $organization->traceRecords()->where('status', 'active')->count(),
+            'total_inventory_qty' => $organization->traceRecords()->where('status', 'active')->sum('quantity') ?? 0,
+            'total_locations' => $organization->locations()->count(),
+            'total_partners' => $organization->partners()->count(),
+            'recent_events' => CTEEvent::where('organization_id', $organization->id)
+                ->with(['traceRecord', 'traceRecord.product', 'location', 'creator'])
+                ->orderBy('event_date', 'desc')
+                ->limit(10)
+                ->get()
+        ];
 
-        // Recent activity timeline
-        $recentActivity = CTEEvent::with(['traceRecord.product', 'location', 'creator'])
-            ->latest('created_at')
-            ->take(5)
-            ->get();
-
-        return view('dashboard', compact('stats', 'eventsByType', 'recentActivity', 'packageStats'));
+        return view('dashboard', [
+            'stats' => $stats,
+            'packageStats' => $packageStats,
+            'is_system_admin' => false
+        ]);
     }
 }

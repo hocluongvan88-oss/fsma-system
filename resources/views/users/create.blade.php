@@ -33,8 +33,6 @@
         
         $userLimit = $currentUser->isAdmin() ? 999999 : ($packageLimits[$currentUser->package_id] ?? 1);
         $remainingUsers = max(0, $userLimit - $activeUserCount);
-        
-        $packages = \App\Models\Package::visible()->ordered()->get();
     @endphp
 
     @if($userLimit < 999999)
@@ -93,7 +91,8 @@
                 @if(auth()->user()->isAdmin())
                 <option value="admin" {{ old('role') === 'admin' ? 'selected' : '' }}>Admin</option>
                 @endif
-                <option value="manager" {{ old('role') === 'manager' ? 'selected' : '' }}>Manager</option>
+                {{-- Ensure manager option is always visible and properly selected --}}
+                <option value="manager" {{ old('role') === 'manager' || old('role') === '' ? 'selected' : '' }}>Manager</option>
                 <option value="operator" {{ old('role') === 'operator' ? 'selected' : '' }}>Operator</option>
             </select>
             @if(!auth()->user()->isAdmin())
@@ -104,8 +103,55 @@
             @enderror
         </div>
 
-        {{-- Enhanced Package selection with visual cards for Admin users --}}
+        {{-- Add organization scenario selector for Admin users --}}
         @if(auth()->user()->isAdmin())
+        <div class="form-group">
+            <label class="form-label">Organization Assignment *</label>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="radio" name="organization_scenario" value="existing" {{ old('organization_scenario', 'existing') === 'existing' ? 'checked' : '' }} onchange="toggleOrganizationScenario()" required>
+                    <span>Assign to Existing Organization</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    <input type="radio" name="organization_scenario" value="new" {{ old('organization_scenario') === 'new' ? 'checked' : '' }} onchange="toggleOrganizationScenario()" required>
+                    <span>Create New Organization</span>
+                </label>
+            </div>
+            @error('organization_scenario')
+                <span style="color: var(--error); font-size: 0.875rem;">{{ $message }}</span>
+            @enderror
+        </div>
+
+        {{-- Existing Organization Section --}}
+        <div id="existing-org-section" style="display: {{ old('organization_scenario', 'existing') === 'existing' ? 'block' : 'none' }};">
+            <div class="form-group">
+                <label class="form-label" for="organization_id">Select Organization *</label>
+                <select id="organization_id" name="organization_id" class="form-select">
+                    <option value="">Select Organization</option>
+                    @foreach($organizations as $org)
+                        <option value="{{ $org->id }}" {{ old('organization_id') == $org->id ? 'selected' : '' }}>
+                            {{ $org->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('organization_id')
+                    <span style="color: var(--error); font-size: 0.875rem;">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+
+        {{-- New Organization Section --}}
+        <div id="new-org-section" style="display: {{ old('organization_scenario') === 'new' ? 'block' : 'none' }};">
+            <div class="form-group">
+                <label class="form-label" for="organization_name">Organization Name *</label>
+                <input type="text" id="organization_name" name="organization_name" class="form-input" value="{{ old('organization_name') }}" maxlength="255">
+                @error('organization_name')
+                    <span style="color: var(--error); font-size: 0.875rem;">{{ $message }}</span>
+                @enderror
+            </div>
+        </div>
+
+        {{-- Enhanced Package selection with visual cards for Admin users --}}
         <div class="form-group">
             <label class="form-label">{{ __('messages.package') }} *</label>
             <small style="color: var(--text-muted); font-size: 0.75rem; display: block; margin-bottom: 1rem;">
@@ -119,7 +165,7 @@
                 <div class="package-card" 
                      data-package-id="{{ $package->id }}"
                      onclick="selectPackage('{{ $package->id }}')"
-                     style="cursor: pointer; border: 2px solid var(--border); border-radius: 8px; padding: 1rem; transition: all 0.2s; {{ old('package_id', 'free') === $package->id ? 'border-color: var(--accent-primary); background: rgba(59, 130, 246, 0.05);' : '' }}">
+                     style="cursor: pointer; border: 2px solid var(--border); border-radius: 8px; padding: 1rem; transition: all 0.2s; {{ old('package_id', 'free') === $package->id ? 'border-color: var(--accent-primary); background: rgba(59, 130, 246, 0.05);' : '' }};">
                     
                     <div style="display: flex; justify-content: space-between; align-items: start; gap: 1rem; margin-bottom: 0.75rem;">
                         <div style="flex: 1;">
@@ -133,7 +179,7 @@
                             </h4>
                             <p style="color: var(--text-secondary); font-size: 0.875rem; margin: 0;">{{ $package->description }}</p>
                         </div>
-                        <div class="package-check" style="width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; {{ old('package_id', 'free') === $package->id ? 'border-color: var(--accent-primary); background: var(--accent-primary);' : '' }}">
+                        <div class="package-check" style="width: 24px; height: 24px; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; {{ old('package_id', 'free') === $package->id ? 'border-color: var(--accent-primary); background: var(--accent-primary);' : '' }};">
                             <span style="color: white; font-size: 0.875rem; {{ old('package_id', 'free') === $package->id ? 'display: block;' : 'display: none;' }}">✓</span>
                         </div>
                     </div>
@@ -185,6 +231,28 @@
                 <span style="color: var(--error); font-size: 0.875rem;">{{ $message }}</span>
             @enderror
         </div>
+        @else
+        {{-- For non-admin users, show only their organization --}}
+        <div class="form-group">
+            <label class="form-label" for="organization_id">Organization *</label>
+            <select id="organization_id" name="organization_id" class="form-select" required>
+                <option value="">Select Organization</option>
+                @foreach($organizations as $org)
+                    @if(auth()->user()->organization_id === $org->id)
+                        <option value="{{ $org->id }}" {{ old('organization_id', auth()->user()->organization_id) == $org->id ? 'selected' : '' }}>
+                            {{ $org->name }}
+                        </option>
+                    @endif
+                @endforeach
+            </select>
+            <small style="color: var(--text-muted); font-size: 0.75rem;">You can only assign users to your organization.</small>
+            @error('organization_id')
+                <span style="color: var(--error); font-size: 0.875rem;">{{ $message }}</span>
+            @enderror
+        </div>
+        
+        {{-- Hidden field for non-admin users --}}
+        <input type="hidden" name="organization_scenario" value="existing">
         @endif
 
         <div class="form-group">
@@ -215,7 +283,7 @@
     </form>
 </div>
 
-{{-- Add JavaScript for package selection interaction --}}
+{{-- Add JavaScript for package selection and organization scenario toggle --}}
 <script>
 function selectPackage(packageId) {
     // Update hidden input
@@ -247,6 +315,24 @@ function selectPackage(packageId) {
             checkIcon.style.display = 'none';
         }
     });
+}
+
+function toggleOrganizationScenario() {
+    const scenario = document.querySelector('input[name="organization_scenario"]:checked').value;
+    const existingOrgSection = document.getElementById('existing-org-section');
+    const newOrgSection = document.getElementById('new-org-section');
+    
+    if (scenario === 'existing') {
+        existingOrgSection.style.display = 'block';
+        newOrgSection.style.display = 'none';
+        document.getElementById('organization_id').required = true;
+        document.getElementById('organization_name').required = false;
+    } else {
+        existingOrgSection.style.display = 'none';
+        newOrgSection.style.display = 'block';
+        document.getElementById('organization_id').required = false;
+        document.getElementById('organization_name').required = true;
+    }
 }
 </script>
 @endsection

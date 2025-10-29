@@ -23,10 +23,7 @@ class QueryOptimizationService
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($organizationId, $ftlOnly) {
             $query = DB::table('products')
                 ->select('id', 'sku', 'product_name', 'is_ftl', 'category', 'unit_of_measure', 'organization_id')
-                ->where(function($q) use ($organizationId) {
-                    $q->where('organization_id', $organizationId)
-                      ->orWhereNull('organization_id');
-                });
+                ->where('organization_id', $organizationId);
             
             if ($ftlOnly) {
                 $query->where('is_ftl', true);
@@ -47,10 +44,7 @@ class QueryOptimizationService
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($organizationId) {
             return DB::table('locations')
                 ->select('id', 'location_name', 'gln', 'location_type', 'organization_id')
-                ->where(function($q) use ($organizationId) {
-                    $q->where('organization_id', $organizationId)
-                      ->orWhereNull('organization_id');
-                })
+                ->where('organization_id', $organizationId)
                 ->orderBy('location_name')
                 ->get();
         });
@@ -67,10 +61,7 @@ class QueryOptimizationService
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($organizationId, $partnerType) {
             $query = DB::table('partners')
                 ->select('id', 'partner_name', 'partner_type', 'gln', 'organization_id')
-                ->where(function($q) use ($organizationId) {
-                    $q->where('organization_id', $organizationId)
-                      ->orWhereNull('organization_id');
-                });
+                ->where('organization_id', $organizationId);
             
             if (in_array($partnerType, ['supplier', 'customer'])) {
                 $query->where(function($q) use ($partnerType) {
@@ -87,14 +78,15 @@ class QueryOptimizationService
 
     /**
      * Get active trace records with caching
-     * Optimized: Only select needed columns, eager load product
+     * Modified to return objects with product relationship accessible
+     * Now returns records with product data as nested object for view compatibility
      */
     public static function getActiveTraceRecords($organizationId)
     {
         $cacheKey = "trace_records_active_org_{$organizationId}";
         
         return Cache::remember($cacheKey, self::CACHE_DURATION, function () use ($organizationId) {
-            return DB::table('trace_records as tr')
+            $records = DB::table('trace_records as tr')
                 ->join('products as p', 'tr.product_id', '=', 'p.id')
                 ->select(
                     'tr.id',
@@ -112,12 +104,21 @@ class QueryOptimizationService
                 ->where('tr.available_quantity', '>', 0)
                 ->orderBy('tr.created_at', 'desc')
                 ->get();
+            
+            return $records->map(function($record) {
+                $record->product = (object)[
+                    'id' => $record->product_id,
+                    'product_name' => $record->product_name
+                ];
+                return $record;
+            });
         });
     }
 
     /**
      * Get recent CTE events with pagination
      * Optimized: Only select needed columns, use pagination
+     * CRITICAL FIX: Added organization_id filter on leftJoin partners to prevent NULL-based data leakage
      */
     public static function getRecentCTEEvents(string $eventType, $organizationId, int $limit = 10)
     {
@@ -125,7 +126,10 @@ class QueryOptimizationService
             ->join('trace_records as tr', 'ce.trace_record_id', '=', 'tr.id')
             ->join('products as p', 'tr.product_id', '=', 'p.id')
             ->join('locations as l', 'ce.location_id', '=', 'l.id')
-            ->leftJoin('partners as pa', 'ce.partner_id', '=', 'pa.id')
+            ->leftJoin('partners as pa', function($join) use ($organizationId) {
+                $join->on('ce.partner_id', '=', 'pa.id')
+                     ->where('pa.organization_id', '=', $organizationId);
+            })
             ->select(
                 'ce.id',
                 'ce.event_type',
@@ -139,6 +143,9 @@ class QueryOptimizationService
             )
             ->where('ce.event_type', $eventType)
             ->where('tr.organization_id', $organizationId)
+            ->where('ce.organization_id', $organizationId)
+            ->where('p.organization_id', $organizationId)
+            ->where('l.organization_id', $organizationId)
             ->orderBy('ce.event_date', 'desc')
             ->limit($limit)
             ->get();
@@ -147,19 +154,27 @@ class QueryOptimizationService
     /**
      * Clear cache for organization
      * Call this after creating/updating/deleting records
+     * Fixed cache invalidation to use exact keys instead of wildcard patterns
      */
     public static function clearOrganizationCache($organizationId)
     {
-        $patterns = [
-            "products_org_{$organizationId}_*",
-            "locations_org_{$organizationId}",
-            "partners_org_{$organizationId}_*",
-            "trace_records_active_org_{$organizationId}",
-        ];
+        // Clear all product cache variations for this organization
+        \Illuminate\Support\Facades\Cache::forget("products_org_{$organizationId}_ftl_0");
+        \Illuminate\Support\Facades\Cache::forget("products_org_{$organizationId}_ftl_1");
         
-        foreach ($patterns as $pattern) {
-            Cache::forget($pattern);
-        }
+        // Clear location cache
+        \Illuminate\Support\Facades\Cache::forget("locations_org_{$organizationId}");
+        
+        // Clear all partner type variations
+        \Illuminate\Support\Facades\Cache::forget("partners_org_{$organizationId}_type_supplier");
+        \Illuminate\Support\Facades\Cache::forget("partners_org_{$organizationId}_type_customer");
+        \Illuminate\Support\Facades\Cache::forget("partners_org_{$organizationId}_type_both");
+        \Illuminate\Support\Facades\Cache::forget("partners_org_{$organizationId}_type_processing");
+        \Illuminate\Support\Facades\Cache::forget("partners_org_{$organizationId}_type_distribution");
+        \Illuminate\Support\Facades\Cache::forget("partners_org_{$organizationId}_type_farm");
+        
+        // Clear trace records cache
+        \Illuminate\Support\Facades\Cache::forget("trace_records_active_org_{$organizationId}");
     }
 
     /**

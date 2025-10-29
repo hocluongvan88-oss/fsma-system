@@ -8,6 +8,9 @@ trait HasOrganizationAccess
 {
     /**
      * Scope to filter by current user's organization
+     * Replaced isSystemAdmin() with isAdmin()
+     * 
+     * SECURITY FIX: Proper distinction between Admin and Organization Manager
      */
     public function scopeForCurrentOrganization(Builder $query): Builder
     {
@@ -17,7 +20,6 @@ trait HasOrganizationAccess
             return $query->whereNull('organization_id');
         }
 
-        // Admin can see all organizations
         if ($user->isAdmin()) {
             return $query;
         }
@@ -27,6 +29,8 @@ trait HasOrganizationAccess
 
     /**
      * Check if user can access this resource
+     * 
+     * SECURITY FIX: Strict organization boundary enforcement
      */
     public function canAccess($user = null): bool
     {
@@ -36,17 +40,17 @@ trait HasOrganizationAccess
             return false;
         }
 
-        // Admin can access everything
         if ($user->isAdmin()) {
             return true;
         }
 
-        // Check organization match
         return $this->organization_id === $user->organization_id;
     }
 
     /**
      * Check if user can edit this resource
+     * 
+     * SECURITY FIX: Role-based editing with organization boundary
      */
     public function canEdit($user = null): bool
     {
@@ -56,12 +60,10 @@ trait HasOrganizationAccess
             return false;
         }
 
-        // Admin can edit everything
         if ($user->isAdmin()) {
             return true;
         }
 
-        // Manager can edit within their organization
         if ($user->isManager() && $this->organization_id === $user->organization_id) {
             return true;
         }
@@ -71,9 +73,25 @@ trait HasOrganizationAccess
 
     /**
      * Check if user can delete this resource
+     * 
+     * SECURITY FIX: Deletion restricted to managers and admins within organization
      */
     public function canDelete($user = null): bool
     {
-        return $this->canEdit($user);
+        $user = $user ?? auth()->user();
+
+        if (!$user) {
+            return false;
+        }
+
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        if ($user->isManager() && $this->organization_id === $user->organization_id) {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\TenantScoped;
 
 class CTEEvent extends Model
 {
-    use HasFactory;
+    use HasFactory, TenantScoped;
 
     protected $table = 'cte_events';
 
@@ -53,6 +54,7 @@ class CTEEvent extends Model
         'pack_date',
         'cooling_date', // Added KDE #14
         'signature_id', // Added signature_id to fillable
+        'organization_id',
     ];
 
     protected function casts(): array

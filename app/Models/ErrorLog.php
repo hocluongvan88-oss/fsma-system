@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
 
 class ErrorLog extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $fillable = [
+        'organization_id',
         'error_type',
         'error_message',
         'error_code',
@@ -40,7 +42,6 @@ class ErrorLog extends Model
         'updated_at' => 'datetime',
     ];
 
-    // Relationships
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -51,7 +52,6 @@ class ErrorLog extends Model
         return $this->belongsTo(User::class, 'resolved_by');
     }
 
-    // Scopes
     public function scopeUnresolved($query)
     {
         return $query->where('is_resolved', false);
@@ -82,7 +82,6 @@ class ErrorLog extends Model
         return $query->where('error_type', $type);
     }
 
-    // Helper methods
     public function markAsResolved($userId, $notes = null)
     {
         $this->update([

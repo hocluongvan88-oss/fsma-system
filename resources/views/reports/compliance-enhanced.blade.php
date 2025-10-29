@@ -92,11 +92,11 @@
         @foreach($nonCompliantEvents as $event)
         <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; border-left: 4px solid var(--danger);">
             <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                <strong>{{ $event->traceRecord->tlc }}</strong>
+                <strong>{{ $event->traceRecord?->tlc ?? 'N/A' }}</strong>
                 <span class="badge badge-danger">{{ __('messages.non_compliant') }}</span>
             </div>
             <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
-                {{ $event->traceRecord->product->product_name }} | {{ $event->event_date->format('Y-m-d H:i') }}
+                {{ $event->traceRecord?->product?->product_name ?? __('messages.product_deleted') }} | {{ $event->event_date->format('Y-m-d H:i') }}
             </div>
             <div style="font-size: 0.8rem; color: var(--danger);">
                 {{ __('messages.issues') }}: {{ $event->compliance_issues }}

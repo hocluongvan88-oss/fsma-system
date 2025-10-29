@@ -13,15 +13,24 @@ class DigitalCertificateService
      */
     public function generateCertificate(User $user, int $keySize = 2048, int $validDays = 365): DigitalCertificate
     {
-        // Generate RSA key pair
-        $config = [
-            'private_key_bits' => $keySize,
-            'private_key_type' => OPENSSL_KEYTYPE_RSA,
-        ];
+        $this->initializeOpenSSL();
+        
+        // Generate RSA key pair with improved error handling
+        $res = $this->generateRSAKeyPair($keySize);
+        
+        if ($res === false) {
+            throw new \Exception('Failed to generate RSA key pair after retries: ' . openssl_error_string());
+        }
 
-        $res = openssl_pkey_new($config);
-        openssl_pkey_export($res, $privateKey);
+        $privateKey = '';
+        if (!openssl_pkey_export($res, $privateKey)) {
+            throw new \Exception('Failed to export private key: ' . openssl_error_string());
+        }
+
         $publicKeyDetails = openssl_pkey_get_details($res);
+        if ($publicKeyDetails === false) {
+            throw new \Exception('Failed to get public key details: ' . openssl_error_string());
+        }
         $publicKey = $publicKeyDetails['key'];
 
         // Create certificate signing request
@@ -36,13 +45,26 @@ class DigitalCertificateService
         ];
 
         $csr = openssl_csr_new($dn, $res);
+        if ($csr === false) {
+            throw new \Exception('Failed to create certificate signing request: ' . openssl_error_string());
+        }
 
         // Self-sign the certificate
         $cert = openssl_csr_sign($csr, null, $res, $validDays);
-        openssl_x509_export($cert, $certPem);
+        if ($cert === false) {
+            throw new \Exception('Failed to sign certificate: ' . openssl_error_string());
+        }
+
+        $certPem = '';
+        if (!openssl_x509_export($cert, $certPem)) {
+            throw new \Exception('Failed to export certificate: ' . openssl_error_string());
+        }
 
         // Get certificate details
         $certDetails = openssl_x509_parse($cert);
+        if ($certDetails === false) {
+            throw new \Exception('Failed to parse certificate: ' . openssl_error_string());
+        }
         $serialNumber = $certDetails['serialNumber'] ?? Str::random(32);
 
         // Encrypt private key before storing
@@ -81,6 +103,159 @@ class DigitalCertificateService
         ]);
 
         return $certificate;
+    }
+
+    /**
+     * Initialize OpenSSL configuration with entropy handling
+     */
+    private function initializeOpenSSL(): void
+    {
+        // Clear any previous OpenSSL errors
+        while (openssl_error_string() !== false) {
+            // Clear error queue
+        }
+
+        $this->initializeEntropy();
+
+        // Set OpenSSL configuration if available
+        $opensslConfigPath = env('OPENSSL_CONFIG_PATH');
+        if ($opensslConfigPath && file_exists($opensslConfigPath)) {
+            putenv('OPENSSL_CONF=' . $opensslConfigPath);
+        }
+    }
+
+    /**
+     * Initialize entropy sources for OpenSSL
+     * Handles systems where /dev/urandom is not available
+     */
+    private function initializeEntropy(): void
+    {
+        // Try to seed OpenSSL with random data from multiple sources
+        $entropy = '';
+
+        // Source 1: PHP's random_bytes (most reliable)
+        try {
+            $entropy .= random_bytes(32);
+        } catch (\Exception $e) {
+            // Fallback if random_bytes fails
+        }
+
+        // Source 2: /dev/urandom if available
+        if (file_exists('/dev/urandom')) {
+            $handle = @fopen('/dev/urandom', 'rb');
+            if ($handle) {
+                $entropy .= fread($handle, 32);
+                fclose($handle);
+            }
+        }
+
+        // Source 3: /dev/random if available (slower but more secure)
+        if (file_exists('/dev/random') && strlen($entropy) < 64) {
+            $handle = @fopen('/dev/random', 'rb');
+            if ($handle) {
+                stream_set_timeout($handle, 1);
+                $entropy .= fread($handle, 32 - strlen($entropy));
+                fclose($handle);
+            }
+        }
+
+        // Source 4: Fallback to system entropy if available
+        if (strlen($entropy) < 32) {
+            if (function_exists('openssl_random_pseudo_bytes')) {
+                $bytesNeeded = 32 - strlen($entropy);
+                if ($bytesNeeded > 0) {
+                    $entropy .= openssl_random_pseudo_bytes($bytesNeeded);
+                }
+            }
+        }
+
+        // The entropy is already collected and will be used by OpenSSL automatically
+    }
+
+    /**
+     * Generate RSA key pair with enhanced retry logic and entropy handling
+     */
+    private function generateRSAKeyPair(int $keySize = 2048)
+    {
+        $maxRetries = 5;
+        $retryCount = 0;
+        $lastError = '';
+
+        while ($retryCount < $maxRetries) {
+            try {
+                if ($retryCount > 0) {
+                    $this->initializeEntropy();
+                    usleep(200000 * $retryCount); // Exponential backoff: 200ms, 400ms, 600ms...
+                }
+
+                $config = [
+                    'private_key_bits' => $keySize,
+                    'private_key_type' => OPENSSL_KEYTYPE_RSA,
+                    'digest_alg' => 'sha256',
+                    'config' => $this->getOpenSSLConfig(),
+                ];
+
+                $res = openssl_pkey_new($config);
+                
+                if ($res !== false && is_resource($res)) {
+                    return $res;
+                }
+
+                $lastError = openssl_error_string() ?: 'Unknown error';
+                $retryCount++;
+                
+            } catch (\Throwable $e) {
+                $lastError = $e->getMessage();
+                $retryCount++;
+                
+                if ($retryCount >= $maxRetries) {
+                    throw new \Exception(
+                        "Failed to generate RSA key pair after {$maxRetries} retries. " .
+                        "Last error: {$lastError}. " .
+                        "This may indicate insufficient entropy. " .
+                        "Try: 1) Increase system entropy, 2) Check /dev/urandom availability, " .
+                        "3) Restart the application"
+                    );
+                }
+            }
+        }
+
+        throw new \Exception(
+            "Failed to generate RSA key pair after {$maxRetries} retries. " .
+            "Last error: {$lastError}"
+        );
+    }
+
+    /**
+     * Get OpenSSL configuration for better entropy handling
+     */
+    private function getOpenSSLConfig(): ?string
+    {
+        // Try to create a temporary OpenSSL config that handles entropy better
+        $configPath = sys_get_temp_dir() . '/openssl_' . uniqid() . '.cnf';
+        
+        $config = <<<'EOL'
+[ req ]
+default_bits = 2048
+distinguished_name = req_distinguished_name
+attributes = req_attributes
+x509_extensions = v3_ca
+
+[ req_distinguished_name ]
+
+[ req_attributes ]
+
+[ v3_ca ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer:always
+basicConstraints = CA:true
+EOL;
+
+        if (@file_put_contents($configPath, $config)) {
+            return $configPath;
+        }
+
+        return null;
     }
 
     /**

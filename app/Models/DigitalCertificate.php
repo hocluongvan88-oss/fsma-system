@@ -4,13 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
 
 class DigitalCertificate extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $fillable = [
         'user_id',
+        'organization_id',
         'certificate_id',
         'certificate_pem',
         'certificate_chain',
@@ -57,6 +59,11 @@ class DigitalCertificate extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
     }
 
     public function scopeActive($query)

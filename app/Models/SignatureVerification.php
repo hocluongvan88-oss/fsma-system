@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\HasOrganizationScope;
 
 class SignatureVerification extends Model
 {
+    use HasOrganizationScope;
+
     protected $fillable = [
         'signature_id',
         'verified_by_user_id',

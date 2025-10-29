@@ -29,6 +29,7 @@ class PublicTraceController extends Controller
 
     /**
      * Public traceability landing page (no auth required)
+     * Added organization_id validation for public endpoints
      */
     public function show(Request $request, $tlc = null)
     {
@@ -55,8 +56,9 @@ class PublicTraceController extends Controller
 
         $cacheKey = "public_trace_{$tlc}";
         $record = Cache::remember($cacheKey, 300, function() use ($tlc) {
-            return TraceRecord::with(['product', 'location', 'cteEvents.location', 'cteEvents.partner'])
-                ->where('tlc', $tlc)
+            return TraceRecord::where('tlc', $tlc)
+                ->where('is_public_traceable', true)
+                ->with(['product', 'location', 'cteEvents.location', 'cteEvents.partner'])
                 ->first();
         });
 
@@ -82,6 +84,7 @@ class PublicTraceController extends Controller
 
     /**
      * API endpoint for mobile scanning
+     * Added organization_id validation for public API
      */
     public function api(Request $request)
     {
@@ -104,8 +107,9 @@ class PublicTraceController extends Controller
 
         $cacheKey = "public_api_trace_{$tlc}";
         $record = Cache::remember($cacheKey, 300, function() use ($tlc) {
-            return TraceRecord::with(['product', 'location', 'cteEvents'])
-                ->where('tlc', $tlc)
+            return TraceRecord::where('tlc', $tlc)
+                ->where('is_public_traceable', true)
+                ->with(['product', 'location', 'cteEvents'])
                 ->first();
         });
 

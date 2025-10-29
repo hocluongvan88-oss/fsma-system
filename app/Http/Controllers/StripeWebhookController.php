@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\WebhookLog;
+use App\Models\Organization;
+use App\Models\PaymentOrder;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 class StripeWebhookController extends Controller
@@ -103,6 +106,22 @@ class StripeWebhookController extends Controller
                     : null
             ]);
             
+            if ($user->organization) {
+                try {
+                    $quotaSyncService = app(\App\Services\CTEQuotaSyncService::class);
+                    $quotaSyncService->syncOrganizationQuota($user->organization);
+                    Log::info('Organization quota synced after subscription update', [
+                        'organization_id' => $user->organization->id,
+                        'subscription_id' => $subscription->id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to sync quota after subscription update', [
+                        'organization_id' => $user->organization->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+            
             Log::info('Subscription updated for user: ' . $user->email);
         }
     }
@@ -111,23 +130,49 @@ class StripeWebhookController extends Controller
     {
         $user = User::where('stripe_subscription_id', $subscription->id)->first();
         
-        if ($user) {
-            // Downgrade to free tier
-            $user->update([
-                'package_id' => 'free',
-                'max_cte_records_monthly' => 50,
-                'max_documents' => 1,
-                'max_users' => 1,
-                'subscription_status' => 'canceled',
-                'subscription_ends_at' => now()
-            ]);
-            
-            Log::info('Subscription canceled for user: ' . $user->email);
+        if ($user && $user->organization) {
+            DB::beginTransaction();
+            try {
+                $user->organization->update([
+                    'package_id' => 'free',
+                ]);
+
+                // Sync quotas to free package limits
+                $quotaSyncService = app(\App\Services\CTEQuotaSyncService::class);
+                $quotaSyncService->syncOrganizationQuota($user->organization);
+
+                DB::commit();
+                
+                Log::info('Subscription canceled and organization downgraded to free', [
+                    'organization_id' => $user->organization->id,
+                    'subscription_id' => $subscription->id,
+                ]);
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Failed to handle subscription cancellation', [
+                    'organization_id' => $user->organization->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
     }
 
     private function handlePaymentSucceeded($invoice)
     {
+        $paymentOrder = PaymentOrder::where('stripe_invoice_id', $invoice->id)->first();
+        
+        if ($paymentOrder) {
+            $paymentOrder->update([
+                'status' => 'completed',
+                'completed_at' => now(),
+            ]);
+            
+            Log::info('Payment order marked as completed', [
+                'payment_order_id' => $paymentOrder->id,
+                'invoice_id' => $invoice->id,
+            ]);
+        }
+
         Log::info('Payment succeeded', [
             'invoice_id' => $invoice->id,
             'customer' => $invoice->customer,
@@ -138,6 +183,15 @@ class StripeWebhookController extends Controller
     private function handlePaymentFailed($invoice)
     {
         $user = User::where('stripe_customer_id', $invoice->customer)->first();
+        
+        $paymentOrder = PaymentOrder::where('stripe_invoice_id', $invoice->id)->first();
+        
+        if ($paymentOrder) {
+            $paymentOrder->update([
+                'status' => 'failed',
+                'error_message' => 'Payment failed from Stripe webhook',
+            ]);
+        }
         
         if ($user) {
             Log::warning('Payment failed for user: ' . $user->email, [

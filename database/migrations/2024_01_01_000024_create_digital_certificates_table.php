@@ -18,8 +18,13 @@ return new class extends Migration
             $table->string('issuer')->comment('Certificate issuer');
             $table->string('subject')->comment('Certificate subject');
             $table->string('serial_number')->unique();
-            $table->timestamp('issued_at');
-            $table->timestamp('expires_at');
+            
+            // FIX LỖI 1067:
+            // 1. Giữ lại useCurrent() cho issued_at.
+            $table->timestamp('issued_at')->useCurrent();
+            // 2. Cho phép expires_at là nullable và không đặt default value.
+            $table->timestamp('expires_at')->nullable(); 
+            
             $table->boolean('is_revoked')->default(false);
             $table->timestamp('revoked_at')->nullable();
             $table->text('revocation_reason')->nullable();

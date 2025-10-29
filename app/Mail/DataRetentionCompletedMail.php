@@ -3,7 +3,6 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
@@ -20,14 +19,21 @@ class DataRetentionCompletedMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'FSMA 204 - Data Retention Cleanup Completed',
+            subject: __('messages.data_retention_completed'),
         );
+    }
+
+    public function headers(): array
+    {
+        return [
+            'List-Unsubscribe' => '<' . route('email.unsubscribe', ['token' => auth()->user()->email_token ?? '']) . '>',
+        ];
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.data-retention-completed',
+            view: 'email.data-retention-completed',
             with: [
                 'stats' => $this->stats,
                 'totalDeleted' => array_sum($this->stats),

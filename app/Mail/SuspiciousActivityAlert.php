@@ -22,14 +22,21 @@ class SuspiciousActivityAlert extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Security Alert: Suspicious Activity Detected',
+            subject: __('messages.security_alert'),
         );
+    }
+
+    public function headers(): array
+    {
+        return [
+            'List-Unsubscribe' => '<' . route('email.unsubscribe', ['token' => $this->user->email_token ?? '']) . '>',
+        ];
     }
 
     public function content(): Content
     {
         return new Content(
-            view: 'emails.suspicious-activity-alert',
+            view: 'email.suspicious-activity-alert',
             with: [
                 'user' => $this->user,
                 'action' => $this->action,

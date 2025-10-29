@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
 
 class ExportLog extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $table = 'export_logs';
 
@@ -32,6 +33,8 @@ class ExportLog extends Model
     protected function casts(): array
     {
         return [
+            'ip_address' => 'encrypted',      // Encrypt IP address at rest
+            'user_agent' => 'encrypted',      // Encrypt user agent at rest
             'is_verified' => 'boolean',
             'verified_at' => 'datetime',
             'created_at' => 'datetime',

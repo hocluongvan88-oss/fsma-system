@@ -4,11 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use App\Traits\HasOrganizationAccess;
+use App\Traits\TenantScoped;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Document extends Model
 {
-    use HasFactory, HasOrganizationAccess;
+    use HasFactory, TenantScoped, SoftDeletes;
 
     protected $fillable = [
         'doc_number',
@@ -29,6 +30,11 @@ class Document extends Model
         'approved_at',
         'metadata',
         'organization_id',
+        'file_hash',
+        'metadata_hash',
+        'is_encrypted',
+        'encrypted_at',
+        'archived_at', // Added for archival support
     ];
 
     protected $casts = [
@@ -37,6 +43,9 @@ class Document extends Model
         'review_date' => 'date',
         'expiry_date' => 'date',
         'approved_at' => 'datetime',
+        'is_encrypted' => 'boolean',
+        'encrypted_at' => 'datetime',
+        'archived_at' => 'datetime', // Added for archival support
     ];
 
     // Relationships
@@ -55,10 +64,26 @@ class Document extends Model
         return $this->hasMany(DocumentVersion::class);
     }
 
+    public function approvals()
+    {
+        return $this->hasMany(DocumentApproval::class);
+    }
+
+    public function signatures()
+    {
+        return $this->morphMany(ESignature::class, 'record');
+    }
+
     // Scopes
     public function scopeActive($query)
     {
-        return $query->where('status', '!=', 'archived');
+        return $query->where('status', '!=', 'archived')
+            ->whereNull('archived_at');
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->whereNotNull('archived_at');
     }
 
     public function scopeApproved($query)
@@ -103,6 +128,16 @@ class Document extends Model
     public function canBeApproved()
     {
         return $this->status === 'review';
+    }
+
+    public function isArchived(): bool
+    {
+        return !is_null($this->archived_at);
+    }
+
+    public function hasSignatures(): bool
+    {
+        return $this->signatures()->exists();
     }
 
     public function approve(User $user)

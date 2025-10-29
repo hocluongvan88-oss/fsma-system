@@ -12,12 +12,18 @@ class AuditLogPolicy
      */
     public function view(User $user, AuditLog $log): bool
     {
-        // Admin can view any audit log
         if ($user->isAdmin()) {
             return true;
         }
 
-        return $user->organization_id === $log->user->organization_id;
+        // Ensure audit log belongs to same organization
+        if (!isset($log->organization_id)) {
+            // Fallback to checking log user's organization if log doesn't have organization_id
+            return $user->organization_id === $log->user->organization_id;
+        }
+
+        // Organization Admin must be in same org
+        return $user->organization_id === $log->organization_id;
     }
 
     /**

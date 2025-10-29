@@ -56,13 +56,18 @@ class ConcurrentVoidService
     {
         return DB::transaction(function () use ($eventId, $reason, $notes) {
             $startTime = microtime(true);
+            
+            $currentUser = auth()->user();
 
             $event = CTEEvent::where('id', $eventId)
+                ->whereHas('traceRecord', function($q) use ($currentUser) {
+                    $q->where('organization_id', $currentUser->organization_id);
+                })
                 ->lockForUpdate()
                 ->first();
 
             if (!$event) {
-                throw new \Exception('Event not found');
+                throw new \Exception('Event not found or unauthorized access');
             }
 
             if ($event->status === 'voided') {
@@ -191,10 +196,10 @@ class ConcurrentVoidService
      */
     protected function reverseShipping(CTEEvent $event): void
     {
-        // Get shipping relationships
         $relationships = DB::table('trace_relationships')
             ->where('cte_event_id', $event->id)
             ->where('relationship_type', 'INPUT')
+            ->where('organization_id', $event->organization_id)
             ->get();
 
         foreach ($relationships as $rel) {

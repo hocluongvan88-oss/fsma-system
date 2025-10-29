@@ -8,12 +8,7 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * 
-     * Creates archival tables that EXACTLY MIRROR the structure of hot tables
-     * for long-term cold storage of FSMA 204 compliance data.
-     * 
-     * IMPORTANT: These tables must match the original table schemas 100%
-     * plus additional archival metadata (original_id, archived_at)
+     * * Creates archival tables that EXACTLY MIRROR the structure of hot tables
      */
     public function up(): void
     {
@@ -24,7 +19,8 @@ return new class extends Migration
             // Mirror all columns from cte_events table
             $table->enum('event_type', ['receiving', 'transformation', 'shipping']);
             $table->unsignedBigInteger('trace_record_id');
-            $table->timestamp('event_date');
+            // Cột này giữ nguyên cấu trúc gốc
+            $table->timestamp('event_date'); 
             $table->unsignedBigInteger('location_id');
             $table->unsignedBigInteger('partner_id')->nullable();
             $table->json('input_tlcs')->nullable()->comment('For transformation events');
@@ -32,8 +28,8 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->unsignedBigInteger('created_by');
             
-            // Archival metadata
-            $table->timestamp('archived_at')->index()->comment('When this record was moved to archival');
+            // Archival metadata - FIX LỖI 1067 (PHẢI CÓ nullable())
+            $table->timestamp('archived_at')->nullable()->index()->comment('When this record was moved to archival');
             $table->unsignedBigInteger('archived_by')->nullable()->comment('User who triggered archival');
             $table->timestamps(); // created_at, updated_at from original
             
@@ -63,8 +59,8 @@ return new class extends Migration
             $table->unsignedBigInteger('organization_id')->nullable();
             $table->string('materialized_path', 500)->nullable();
             
-            // Archival metadata
-            $table->timestamp('archived_at')->index()->comment('When this record was moved to archival');
+            // Archival metadata - FIX LỖI 1067
+            $table->timestamp('archived_at')->nullable()->index()->comment('When this record was moved to archival');
             $table->unsignedBigInteger('archived_by')->nullable()->comment('User who triggered archival');
             $table->timestamps(); // created_at, updated_at from original
             
@@ -86,8 +82,8 @@ return new class extends Migration
             $table->enum('relationship_type', ['INPUT', 'OUTPUT', 'VOID', 'transformation', 'aggregation', 'disaggregation']);
             $table->unsignedBigInteger('cte_event_id')->nullable();
             
-            // Archival metadata
-            $table->timestamp('archived_at')->index()->comment('When this record was moved to archival');
+            // Archival metadata - FIX LỖI 1067
+            $table->timestamp('archived_at')->nullable()->index()->comment('When this record was moved to archival');
             $table->unsignedBigInteger('archived_by')->nullable()->comment('User who triggered archival');
             $table->timestamps(); // created_at, updated_at from original
             
@@ -111,8 +107,8 @@ return new class extends Migration
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
             
-            // Archival metadata
-            $table->timestamp('archived_at')->index()->comment('When this record was moved to archival');
+            // Archival metadata - FIX LỖI 1067
+            $table->timestamp('archived_at')->nullable()->index()->comment('When this record was moved to archival');
             $table->unsignedBigInteger('archived_by')->nullable()->comment('User who triggered archival');
             $table->timestamps(); // created_at, updated_at from original
             

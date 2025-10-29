@@ -34,30 +34,71 @@ class PartnerController extends BaseController
     public function create()
     {
         $categories = $this->getPartnerTypes();
-        
-        // SỬA LỖI: Lấy tất cả sản phẩm cho mục đích chọn/liên kết (Không phân trang)
-        $products = Product::select('id', 'product_name')->latest()->get(); // <-- SỬA
+        $products = Product::select('id', 'product_name')
+            ->where('organization_id', auth()->user()->organization_id)
+            ->latest()
+            ->get();
 
         return view('master-data.partners.create', compact('categories', 'products'));
     }
-    // ... (các phương thức store, show không đổi)
+
+    public function store(Request $request)
+    {
+        $validated = $this->validateWithLocale($request, [
+            'partner_name' => 'required|string|max:200',
+            'partner_type' => 'required|in:supplier,customer,both,processing,distribution,farm',
+            'contact_person' => 'nullable|string|max:100',
+            'email' => 'nullable|email|max:100',
+            'phone' => 'nullable|string|max:20',
+            'address' => 'nullable|string',
+            'gln' => 'nullable|string|size:13',
+        ]);
+
+        if (auth()->check() && auth()->user()->organization_id) {
+            $validated['organization_id'] = auth()->user()->organization_id;
+        } else {
+            return back()->withErrors(['error' => 'User must belong to an organization to create partners.']);
+        }
+
+        $partner = Partner::create($validated);
+
+        \App\Services\QueryOptimizationService::clearOrganizationCache(auth()->user()->organization_id);
+
+        return redirect()->route('master-data.partners.index')
+            ->with('success', $this->getLocalizedSuccessMessage('partner_created_successfully'));
+    }
+
+    public function show(Partner $partner)
+    {
+        $this->authorizePartnerAccess($partner);
+
+        $partner->load(['cteEvents' => function($query) {
+            $query->latest()->take(10);
+        }]);
+
+        return view('master-data.partners.show', compact('partner'));
+    }
 
     public function edit(Partner $partner)
     {
+        $this->authorizePartnerAccess($partner);
+
         $categories = $this->getPartnerTypes();
-        
-        // SỬA LỖI: Lấy tất cả sản phẩm cho mục đích chọn/liên kết (Không phân trang)
-        // Chỉ lấy id và product_name để tối ưu bộ nhớ
-        $products = Product::select('id', 'product_name')->latest()->get(); // <-- SỬA
+        $products = Product::select('id', 'product_name')
+            ->where('organization_id', auth()->user()->organization_id)
+            ->latest()
+            ->get();
 
         return view('master-data.partners.edit', compact('partner', 'categories', 'products'));
     }
 
     public function update(Request $request, Partner $partner)
     {
+        $this->authorizePartnerAccess($partner);
+
         $validated = $this->validateWithLocale($request, [
             'partner_name' => 'required|string|max:200',
-            'partner_type' => 'required|in:supplier,customer,both,processing,distribution',
+            'partner_type' => 'required|in:supplier,customer,both,processing,distribution,farm',
             'contact_person' => 'nullable|string|max:100',
             'email' => 'nullable|email|max:100',
             'phone' => 'nullable|string|max:20',
@@ -67,18 +108,36 @@ class PartnerController extends BaseController
 
         $partner->update($validated);
 
+        \App\Services\QueryOptimizationService::clearOrganizationCache(auth()->user()->organization_id);
+
         return redirect()->route('master-data.partners.index')
             ->with('success', $this->getLocalizedSuccessMessage('partner_updated_successfully'));
     }
-    // ... (các phương thức destroy, getPartnerTypes không đổi)
 
-    /**
-     * Phương thức helper để lấy danh sách các loại đối tác (Partner Types).
-     * @return array
-     */
+    public function destroy(Partner $partner)
+    {
+        $this->authorizePartnerAccess($partner);
+
+        try {
+            $partner->delete();
+            return redirect()->route('master-data.partners.index')
+                ->with('success', 'Partner deleted successfully.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Cannot delete partner with existing CTE events.');
+        }
+    }
+
+    private function authorizePartnerAccess(Partner $partner)
+    {
+        $user = auth()->user();
+        
+        if (!$user || ($partner->organization_id !== $user->organization_id && !$user->isAdmin())) {
+            abort(403, 'Unauthorized access to this partner.');
+        }
+    }
+
     private function getPartnerTypes(): array
     {
-        // Dựa trên các giá trị ENUM trong migration partners
         return [
             'supplier' => 'Nhà Cung Cấp (NCC)',
             'customer' => 'Khách Hàng (KH)',

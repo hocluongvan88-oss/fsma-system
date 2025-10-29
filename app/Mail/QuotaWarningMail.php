@@ -17,42 +17,39 @@ class QuotaWarningMail extends Mailable
     public $totalQuota;
     public $percentage;
     public $upgradeUrl;
+    public $userEmailToken;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct($userName, $usedQuota, $totalQuota, $percentage, $upgradeUrl)
+    public function __construct($userName, $usedQuota, $totalQuota, $percentage, $upgradeUrl, $userEmailToken = '')
     {
         $this->userName = $userName;
         $this->usedQuota = $usedQuota;
         $this->totalQuota = $totalQuota;
         $this->percentage = $percentage;
         $this->upgradeUrl = $upgradeUrl;
+        $this->userEmailToken = $userEmailToken;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '⚠️ Cảnh báo: Bạn đã sử dụng ' . $this->percentage . '% dung lượng',
+            subject: __('messages.quota_warning') . ' - ' . $this->percentage . '%',
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
+    public function headers(): array
+    {
+        return [
+            'List-Unsubscribe' => '<' . route('email.unsubscribe', ['token' => $this->userEmailToken]) . '>',
+        ];
+    }
+
     public function content(): Content
     {
         return new Content(
-            view: 'emails.quota-warning',
+            view: 'email.quota-warning',
         );
     }
 
-    /**
-     * Get the attachments for the message.
-     */
     public function attachments(): array
     {
         return [];

@@ -57,19 +57,26 @@ class MasterDataController extends Controller
      */
     public function getPartner($id)
     {
-        $partner = Partner::forOrganization(auth()->user()->organization_id)
+        $currentUser = auth()->user();
+        $partner = Partner::forOrganization($currentUser->organization_id)
             ->findOrFail($id);
-            
-        return response()->json([
+        
+        $data = [
             'id' => $partner->id,
             'partner_name' => $partner->partner_name,
             'partner_type' => $partner->partner_type,
-            'contact_person' => $partner->contact_person,
-            'email' => $partner->email,
-            'phone' => $partner->phone,
-            'address' => $partner->address,
             'gln' => $partner->gln,
-        ]);
+        ];
+        
+        // Only managers and admins can see contact details (principle of least privilege)
+        if ($currentUser->hasRole('manager') || $currentUser->hasRole('admin')) {
+            $data['contact_person'] = $partner->contact_person;
+            $data['email'] = $partner->email;
+            $data['phone'] = $partner->phone;
+            $data['address'] = $partner->address;
+        }
+        
+        return response()->json($data);
     }
 
     /**

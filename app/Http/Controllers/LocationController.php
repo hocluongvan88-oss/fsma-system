@@ -51,6 +51,8 @@ class LocationController extends BaseController
 
         $location = Location::create($validated);
 
+        \App\Services\QueryOptimizationService::clearOrganizationCache(auth()->user()->organization_id);
+
         return redirect()->route('master-data.locations.index')
             ->with('success', $this->getLocalizedSuccessMessage('location_created_successfully'));
     }
@@ -84,6 +86,8 @@ class LocationController extends BaseController
         ]);
 
         $location->update($validated);
+
+        \App\Services\QueryOptimizationService::clearOrganizationCache(auth()->user()->organization_id);
 
         return redirect()->route('master-data.locations.index')
             ->with('success', $this->getLocalizedSuccessMessage('location_updated_successfully'));

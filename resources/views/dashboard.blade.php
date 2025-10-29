@@ -3,6 +3,9 @@
 @section('title', __('messages.dashboard'))
 
 @section('content')
+{{-- Added trial status banner component --}}
+<x-trial-status-banner />
+
 {{-- Added translation support for package usage warning --}}
 @if($packageStats['show_warning'])
 <div class="card" style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%); color: white; margin-bottom: 1.5rem; border: none;">
@@ -117,11 +120,11 @@
                             {{ __('messages.' . $event->event_type) }}
                         </span>
                     </td>
-                    <td>{{ $event->traceRecord->tlc }}</td>
-                    <td>{{ $event->traceRecord->product->product_name }}</td>
-                    <td>{{ $event->location->location_name }}</td>
+                    <td>{{ $event->traceRecord?->tlc ?? 'N/A' }}</td>
+                    <td>{{ $event->traceRecord?->product?->product_name ?? __('messages.product_deleted') }}</td>
+                    <td>{{ $event->location?->location_name ?? 'N/A' }}</td>
                     <td>{{ $event->event_date->format('Y-m-d H:i') }}</td>
-                    <td>{{ $event->creator->full_name }}</td>
+                    <td>{{ $event->creator?->full_name ?? 'N/A' }}</td>
                 </tr>
                 @empty
                 <tr>

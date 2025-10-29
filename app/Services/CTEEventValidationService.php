@@ -146,15 +146,14 @@ class CTEEventValidationService
             return $errors;
         }
 
-        // Check if this TLC already exists for the same organization
         $query = CTEEvent::where('traceability_lot_code', $tlc)
             ->where('id', '!=', $event->id);
 
-        // Filter by organization_id if user is authenticated
+        // Filter by organization_id - CRITICAL for multi-tenant isolation
         if (auth()->check() && auth()->user()->organization_id) {
-            $query->whereHas('creator', function ($q) {
-                $q->where('organization_id', auth()->user()->organization_id);
-            });
+            $query->where('organization_id', auth()->user()->organization_id);
+        } elseif ($event->organization_id) {
+            $query->where('organization_id', $event->organization_id);
         }
 
         $existingEvent = $query->first();
@@ -280,11 +279,18 @@ class CTEEventValidationService
             return null;
         }
 
-        return CTEEvent::where('traceability_lot_code', $tlc)
+        $query = CTEEvent::where('traceability_lot_code', $tlc)
             ->where('id', '!=', $event->id)
-            ->where('event_date', '<', $event->event_date)
-            ->orderBy('event_date', 'desc')
-            ->first();
+            ->where('event_date', '<', $event->event_date);
+
+        // Filter by organization_id - CRITICAL for multi-tenant isolation
+        if (auth()->check() && auth()->user()->organization_id) {
+            $query->where('organization_id', auth()->user()->organization_id);
+        } elseif ($event->organization_id) {
+            $query->where('organization_id', $event->organization_id);
+        }
+
+        return $query->orderBy('event_date', 'desc')->first();
     }
 
     /**

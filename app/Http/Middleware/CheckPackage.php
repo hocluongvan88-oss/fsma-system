@@ -11,6 +11,7 @@ class CheckPackage
 {
     /**
      * Handle an incoming request.
+     * Updated to check organization package instead of user package
      */
     public function handle(Request $request, Closure $next, string $requiredPackage): Response
     {
@@ -21,6 +22,12 @@ class CheckPackage
                 return redirect()->route('login');
             }
 
+            $organization = $user->organization;
+            if (!$organization) {
+                return redirect()->route('organization.select')
+                    ->with('error', 'Please select an organization to continue.');
+            }
+
             // Package hierarchy: free = 0, basic = 1, premium = 2, enterprise = 3
             $packageLevels = [
                 'free' => 0,
@@ -29,15 +36,22 @@ class CheckPackage
                 'enterprise' => 3,
             ];
 
-            $userLevel = $packageLevels[$user->package_id] ?? 0;
+            $organizationLevel = $packageLevels[$organization->package_id] ?? 0;
             $requiredLevel = $packageLevels[$requiredPackage] ?? 0;
 
-            if ($userLevel < $requiredLevel) {
+            if ($organizationLevel < $requiredLevel) {
                 try {
                     $notificationService = new \App\Services\NotificationService();
                     $notificationService->sendFeatureLocked($user, $requiredPackage);
                 } catch (\Exception $e) {
                     Log::warning('Failed to send feature locked notification: ' . $e->getMessage());
+                }
+
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'error' => "This feature requires {$requiredPackage} package or higher.",
+                        'blocked' => true,
+                    ], 403);
                 }
 
                 return redirect()->route('pricing')

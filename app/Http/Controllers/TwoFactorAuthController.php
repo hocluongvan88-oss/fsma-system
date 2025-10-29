@@ -122,4 +122,22 @@ class TwoFactorAuthController extends Controller
 
         return view('auth.two-fa-verify');
     }
+
+    /**
+     * Regenerate backup codes
+     */
+    public function regenerateCodes(Request $request)
+    {
+        $user = auth()->user();
+
+        if (!$user->two_fa_enabled) {
+            return back()->withErrors(['error' => '2FA is not enabled']);
+        }
+
+        $backupCodes = $this->twoFAService->generateBackupCodes($user);
+
+        return view('auth.two-fa-backup-codes', [
+            'backupCodes' => $backupCodes,
+        ])->with('success', 'New backup codes generated successfully');
+    }
 }

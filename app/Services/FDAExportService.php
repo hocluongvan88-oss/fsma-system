@@ -54,8 +54,8 @@ class FDAExportService
             'record_count' => $recordCount,
             'start_record_id' => $startRecordId,
             'end_record_id' => $endRecordId,
-            'ip_address' => Request::ip(),
-            'user_agent' => Request::userAgent(),
+            'ip_address' => encrypt(Request::ip()),           // Encrypt IP address
+            'user_agent' => encrypt(Request::userAgent()),    // Encrypt user agent
         ]);
     }
 
@@ -67,7 +67,7 @@ class FDAExportService
         $metadata = [
             'export_id' => $exportLog->export_id,
             'content_hash' => $exportLog->content_hash,
-            'exported_by' => Auth::user()?->name ?? 'System',
+            'exported_by' => 'Organization-' . Auth::user()?->organization_id ?? 'System', // Use org ID instead of user name
             'exported_at' => now()->toIso8601String(),
             'record_count' => $exportLog->record_count,
             'verified' => 'Not modified',
@@ -104,10 +104,23 @@ class FDAExportService
 
     /**
      * Export all CTE events with hash protection
+     * 
+     * @param Carbon|null $startDate
+     * @param Carbon|null $endDate
+     * @param string $format
+     * @param int $organizationId - REQUIRED for security (P0 FIX)
+     * @return string
      */
-    public function exportAllEvents(?Carbon $startDate = null, ?Carbon $endDate = null, string $format = 'json'): string
+    public function exportAllEvents(
+        ?Carbon $startDate = null, 
+        ?Carbon $endDate = null, 
+        string $format = 'json',
+        int $organizationId // Added organization_id parameter for P0 security fix
+    ): string
     {
-        $query = CTEEvent::query();
+        $query = CTEEvent::whereHas('traceRecord', function($q) use ($organizationId) {
+            $q->where('organization_id', $organizationId);
+        });
 
         if ($startDate && $endDate) {
             $query->whereBetween('event_date', [$startDate, $endDate]);
@@ -137,10 +150,25 @@ class FDAExportService
 
     /**
      * Export events by product with hash protection
+     * 
+     * @param int $productId
+     * @param Carbon|null $startDate
+     * @param Carbon|null $endDate
+     * @param string $format
+     * @param int $organizationId - REQUIRED for security (P0 FIX)
+     * @return string
      */
-    public function exportByProduct(int $productId, ?Carbon $startDate = null, ?Carbon $endDate = null, string $format = 'json'): string
+    public function exportByProduct(
+        int $productId, 
+        ?Carbon $startDate = null, 
+        ?Carbon $endDate = null, 
+        string $format = 'json',
+        int $organizationId // Added organization_id parameter for P0 security fix
+    ): string
     {
-        $query = CTEEvent::where('product_id', $productId);
+        $query = CTEEvent::whereHas('traceRecord', function($q) use ($organizationId, $productId) {
+            $q->where('organization_id', $organizationId);
+        })->where('product_id', $productId);
 
         if ($startDate && $endDate) {
             $query->whereBetween('event_date', [$startDate, $endDate]);
@@ -170,13 +198,27 @@ class FDAExportService
 
     /**
      * Export events by TLC with hash protection
+     * 
+     * @param string $tlc
+     * @param string $format
+     * @param int $organizationId - REQUIRED for security (P0 FIX)
+     * @return string
      */
-    public function exportByTLC(string $tlc, string $format = 'json'): string
+    public function exportByTLC(
+        string $tlc, 
+        string $format = 'json',
+        int $organizationId // Added organization_id parameter for P0 security fix
+    ): string
     {
-        $events = CTEEvent::where('traceability_lot_code', $tlc)
-            ->orWhereJsonContains('input_tlcs', $tlc)
-            ->orWhereJsonContains('output_tlcs', $tlc)
-            ->get();
+        $events = CTEEvent::whereHas('traceRecord', function($q) use ($organizationId) {
+            $q->where('organization_id', $organizationId);
+        })
+        ->where(function($q) use ($tlc) {
+            $q->where('traceability_lot_code', $tlc)
+              ->orWhereJsonContains('input_tlcs', $tlc)
+              ->orWhereJsonContains('output_tlcs', $tlc);
+        })
+        ->get();
 
         $recordCount = $events->count();
         $startRecordId = $events->first()?->id;

@@ -7,6 +7,7 @@ use App\Models\ESignature;
 
 class SignatureRecordType extends Model
 {
+
     /**
      * Tên bảng trong database.
      *

@@ -4,29 +4,51 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\Package;
+use App\Models\Organization;
+use App\Models\PaymentOrder;
+use App\Services\CTEQuotaSyncService;
 
 class CheckoutController extends Controller
 {
-    public function __construct()
+    protected $quotaSyncService;
+
+    public function __construct(CTEQuotaSyncService $quotaSyncService)
     {
         $this->middleware('auth');
+        $this->quotaSyncService = $quotaSyncService;
     }
 
     public function createCheckoutSession(Request $request)
     {
         $validated = $request->validate([
-            'package_id' => 'required|in:basic,premium,enterprise',
+            'package_id' => 'required|string|exists:packages,id',
             'billing_period' => 'required|in:monthly,yearly'
         ]);
 
         $user = Auth::user();
+        $organization = $user->organization;
         
-        // Get package details
-        $packages = $this->getPackages();
-        $package = collect($packages)->firstWhere('id', $validated['package_id']);
+        if (!$organization) {
+            return back()->with('error', 'User must belong to an organization.');
+        }
+
+        $package = Package::where('id', $validated['package_id'])
+            ->where('is_visible', true)
+            ->where('is_selectable', true)
+            ->first();
         
         if (!$package) {
-            return back()->with('error', 'Invalid package selected');
+            return back()->with('error', 'Invalid or unavailable package selected');
+        }
+
+        $packageService = app(\App\Services\PackageService::class);
+        $canChange = $packageService->canChangePackage($organization, $package->id);
+        
+        if (!$canChange['can_change']) {
+            $violations = implode(', ', $canChange['violations']);
+            return back()->with('error', "Cannot change to this package: {$violations}");
         }
 
         // Check if Stripe is configured
@@ -34,15 +56,19 @@ class CheckoutController extends Controller
             return back()->with('error', 'Payment system is not configured. Please contact support.');
         }
 
+        $amount = $validated['billing_period'] === 'monthly' 
+            ? $package->monthly_selling_price 
+            : $package->yearly_selling_price;
+        
+        if (!$amount || $amount <= 0) {
+            return back()->with('error', 'Invalid pricing for selected package');
+        }
+
         try {
             \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
             
-            // Determine price based on billing period
-            $amount = $validated['billing_period'] === 'monthly' 
-                ? $package['monthly_price'] 
-                : $package['yearly_price'];
+            $idempotencyKey = "checkout_{$organization->id}_{$package->id}_{$validated['billing_period']}_" . now()->timestamp;
             
-            // Create Stripe Checkout Session
             $session = \Stripe\Checkout\Session::create([
                 'customer_email' => $user->email,
                 'payment_method_types' => ['card'],
@@ -50,10 +76,10 @@ class CheckoutController extends Controller
                     'price_data' => [
                         'currency' => 'vnd',
                         'product_data' => [
-                            'name' => $package['name'],
-                            'description' => $package['description'],
+                            'name' => $package->name,
+                            'description' => $package->description,
                         ],
-                        'unit_amount' => $amount * 100, // Convert to cents
+                        'unit_amount' => (int)($amount * 100),
                         'recurring' => [
                             'interval' => $validated['billing_period'] === 'monthly' ? 'month' : 'year',
                         ],
@@ -64,19 +90,36 @@ class CheckoutController extends Controller
                 'success_url' => route('checkout.success') . '?session_id={CHECKOUT_SESSION_ID}',
                 'cancel_url' => route('checkout.cancel'),
                 'metadata' => [
-                    'user_id' => $user->id,
-                    'package_id' => $package['id'],
+                    'organization_id' => $organization->id,
+                    'package_id' => $package->id,
                     'billing_period' => $validated['billing_period'],
-                    'max_cte_records' => $package['max_cte_records'],
-                    'max_documents' => $package['max_documents'],
-                    'max_users' => $package['max_users'],
+                    'user_id' => $user->id,
+                ]
+            ], [
+                'Idempotency-Key' => $idempotencyKey
+            ]);
+
+            PaymentOrder::create([
+                'organization_id' => $organization->id,
+                'user_id' => $user->id,
+                'package_id' => $package->id,
+                'billing_period' => $validated['billing_period'],
+                'amount' => $amount,
+                'currency' => 'vnd',
+                'stripe_session_id' => $session->id,
+                'status' => 'pending',
+                'metadata' => [
+                    'idempotency_key' => $idempotencyKey,
                 ]
             ]);
 
             return redirect($session->url);
             
         } catch (\Exception $e) {
-            \Log::error('Stripe checkout error: ' . $e->getMessage());
+            \Log::error('Stripe checkout error: ' . $e->getMessage(), [
+                'organization_id' => $organization->id,
+                'package_id' => $package->id,
+            ]);
             return back()->with('error', 'Unable to process payment. Please try again or contact support.');
         }
     }
@@ -93,26 +136,73 @@ class CheckoutController extends Controller
             \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
             $session = \Stripe\Checkout\Session::retrieve($sessionId);
             
-            // Update user's package
             $user = Auth::user();
+            $organization = $user->organization;
             $metadata = $session->metadata;
             
-            $user->update([
-                'package_id' => $metadata->package_id,
-                'max_cte_records_monthly' => $metadata->max_cte_records,
-                'max_documents' => $metadata->max_documents,
-                'max_users' => $metadata->max_users,
-                'stripe_customer_id' => $session->customer,
-                'stripe_subscription_id' => $session->subscription,
-                'subscription_status' => 'active',
-                'subscription_ends_at' => null,
-            ]);
-            
-            // Get package details for display
-            $packages = $this->getPackages();
-            $package = collect($packages)->firstWhere('id', $metadata->package_id);
-            
-            return view('checkout.success', compact('package'));
+            if (!$organization) {
+                return redirect()->route('pricing')->with('error', 'Organization not found.');
+            }
+
+            DB::beginTransaction();
+            try {
+                // Verify organization ownership
+                if ($organization->id != $metadata->organization_id) {
+                    throw new \Exception('Organization mismatch');
+                }
+
+                // Verify package exists and is valid
+                $package = Package::where('id', $metadata->package_id)
+                    ->where('is_visible', true)
+                    ->where('is_selectable', true)
+                    ->first();
+                
+                if (!$package) {
+                    throw new \Exception('Invalid package');
+                }
+
+                // Update organization package
+                $organization->update([
+                    'package_id' => $metadata->package_id,
+                ]);
+
+                // Sync quotas with new package (atomic within transaction)
+                $this->quotaSyncService->syncOrganizationQuota($organization);
+
+                // Update payment order status
+                PaymentOrder::where('stripe_session_id', $sessionId)
+                    ->update([
+                        'status' => 'completed',
+                        'completed_at' => now(),
+                    ]);
+
+                DB::commit();
+
+                \Log::info('Payment completed and quotas synced', [
+                    'organization_id' => $organization->id,
+                    'package_id' => $metadata->package_id,
+                    'session_id' => $sessionId,
+                ]);
+                
+                return view('checkout.success', compact('package'));
+                
+            } catch (\Exception $e) {
+                DB::rollBack();
+                
+                // Mark payment order as failed
+                PaymentOrder::where('stripe_session_id', $sessionId)
+                    ->update([
+                        'status' => 'failed',
+                        'error_message' => $e->getMessage(),
+                    ]);
+
+                \Log::error('Checkout success processing failed: ' . $e->getMessage(), [
+                    'organization_id' => $organization->id,
+                    'session_id' => $sessionId,
+                ]);
+                
+                throw $e;
+            }
             
         } catch (\Exception $e) {
             \Log::error('Checkout success error: ' . $e->getMessage());
@@ -123,41 +213,5 @@ class CheckoutController extends Controller
     public function cancel()
     {
         return redirect()->route('pricing')->with('info', 'Payment cancelled. You can try again anytime.');
-    }
-
-    private function getPackages()
-    {
-        return [
-            [
-                'id' => 'basic',
-                'name' => 'Basic',
-                'description' => 'Perfect for small businesses',
-                'monthly_price' => 500000,
-                'yearly_price' => 5000000,
-                'max_cte_records' => 500,
-                'max_documents' => 10,
-                'max_users' => 1,
-            ],
-            [
-                'id' => 'premium',
-                'name' => 'Premium',
-                'description' => 'For growing businesses',
-                'monthly_price' => 2000000,
-                'yearly_price' => 20000000,
-                'max_cte_records' => 2500,
-                'max_documents' => 0, // unlimited
-                'max_users' => 3,
-            ],
-            [
-                'id' => 'enterprise',
-                'name' => 'Enterprise',
-                'description' => 'For large organizations',
-                'monthly_price' => 5000000,
-                'yearly_price' => 50000000,
-                'max_cte_records' => 5000,
-                'max_documents' => 0, // unlimited
-                'max_users' => 999999, // unlimited
-            ],
-        ];
     }
 }

@@ -12,6 +12,8 @@ use App\Models\TransformationItem;
 use App\Services\QueryOptimizationService;
 use App\Services\ConcurrentVoidService;
 use App\Services\CTELoggingService;
+use App\Services\CTEQuotaSyncService;
+use App\Services\TLCGenerationService;
 use App\Traits\Paginatable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,65 +25,69 @@ class CTEController extends Controller
 
     protected $concurrentVoidService;
     protected $loggingService;
+    protected $quotaService;
 
     public function __construct(
         ConcurrentVoidService $concurrentVoidService,
-        CTELoggingService $loggingService
+        CTELoggingService $loggingService,
+        CTEQuotaSyncService $quotaService
     ) {
         $this->concurrentVoidService = $concurrentVoidService;
         $this->loggingService = $loggingService;
+        $this->quotaService = $quotaService;
     }
 
     // Receiving
     public function receiving()
     {
         $currentUser = auth()->user();
-        
         $products = QueryOptimizationService::getActiveProducts($currentUser->organization_id, false);
         $locations = QueryOptimizationService::getActiveLocations($currentUser->organization_id);
         $suppliers = QueryOptimizationService::getPartnersByType($currentUser->organization_id, 'supplier');
             
         $recentEvents = CTEEvent::with(['traceRecord.product', 'partner', 'location'])
-            ->whereHas('traceRecord', function($q) use ($currentUser) {
-                $q->where('organization_id', $currentUser->organization_id);
-            })
+            ->forOrganization($currentUser->organization_id)
             ->where('event_type', 'receiving')
             ->orderBy('event_date', 'desc')
             ->limit(10)
             ->get();
         
-        return view('cte.receiving', compact('products', 'locations', 'suppliers', 'recentEvents'));
+        $generatedTLC = TLCGenerationService::generateUniqueTLC($currentUser->organization_id);
+        
+        return view('cte.receiving', compact('products', 'locations', 'suppliers', 'recentEvents', 'generatedTLC'));
     }
 
     public function storeReceiving(Request $request)
     {
-        if (!auth()->user()->canCreateCteRecord()) {
+        try {
+            $this->quotaService->validateCTERecordCreation(auth()->user()->organization);
+        } catch (\Exception $e) {
             return back()->withInput()
-                ->with('error', __('messages.cte_record_limit_reached'));
+                ->with('error', __('messages.cte_record_limit_reached') . ': ' . $e->getMessage());
         }
 
         $rules = [
-            'tlc' => 'required|string|max:100|unique:trace_records',
+            'tlc' => 'required|string|max:100',
             'product_id' => 'required|exists:products,id',
             'product_description' => 'nullable|string|max:500',
-            'product_lot_code' => 'nullable|string|max:100', // Added KDE #12 validation
+            'product_lot_code' => 'nullable|string|max:100',
             'quantity_received' => 'required|numeric|min:0.01',
             'unit' => 'required|string|max:20',
             'location_id' => 'required|exists:locations,id',
-            'receiving_location_gln' => 'nullable|string|regex:/^\d{13}$/',
+            'receiving_location_gln' => 'nullable|string|regex:/^(\d{13})?$/',
             'receiving_location_name' => 'nullable|string|max:255',
-            'harvest_location_gln' => 'nullable|string|regex:/^\d{13}$/', // Added KDE #8 validation
-            'harvest_location_name' => 'nullable|string|max:255', // Added KDE #8 validation
+            'harvest_location_gln' => 'nullable|string|regex:/^(\d{13})?$/',
+            'harvest_location_name' => 'nullable|string|max:255',
             'partner_id' => 'required|exists:partners,id',
             'business_name' => 'nullable|string|max:255',
-            'business_gln' => 'nullable|string|regex:/^\d{13}$/',
+            'business_gln' => 'nullable|string|regex:/^(\d{13})?$/',
             'business_address' => 'nullable|string|max:500',
             'harvest_date' => 'nullable|date',
             'pack_date' => 'nullable|date|after_or_equal:harvest_date',
-            'cooling_date' => 'nullable|date|after_or_equal:pack_date', // Added KDE #14 validation
+            'cooling_date' => 'nullable|date|after_or_equal:pack_date',
             'event_date' => 'required|date|after_or_equal:cooling_date',
             'reference_doc' => 'required|string|max:100',
-            'reference_doc_type' => 'nullable|in:PO,Invoice,BOL,AWB,Other', // Added KDE #17 validation
+            'reference_doc_type' => 'nullable|in:PO,Invoice,BOL,AWB,Other',
             'fda_compliance_notes' => 'nullable|string|max:500',
             'notes' => 'nullable|string',
         ];
@@ -119,8 +125,10 @@ class CTEController extends Controller
 
         DB::beginTransaction();
         try {
+            $tlc = $validated['tlc'];
+
             $traceRecord = TraceRecord::create([
-                'tlc' => $validated['tlc'],
+                'tlc' => $tlc,
                 'product_id' => $validated['product_id'],
                 'quantity' => $validated['quantity_received'],
                 'available_quantity' => $validated['quantity_received'],
@@ -128,8 +136,8 @@ class CTEController extends Controller
                 'unit' => $validated['unit'],
                 'location_id' => $validated['location_id'],
                 'harvest_date' => $validated['harvest_date'] ?? null,
-                'lot_code' => $validated['tlc'],
-                'materialized_path' => '/' . $validated['tlc'] . '/',
+                'lot_code' => $tlc,
+                'materialized_path' => '/' . $tlc . '/',
                 'status' => 'active',
                 'organization_id' => auth()->user()->organization_id,
             ]);
@@ -141,26 +149,29 @@ class CTEController extends Controller
                 'location_id' => $validated['location_id'],
                 'partner_id' => $validated['partner_id'],
                 'product_description' => $validated['product_description'] ?? null,
-                'product_lot_code' => $validated['product_lot_code'] ?? null, // KDE #12
+                'product_lot_code' => $validated['product_lot_code'] ?? null,
                 'quantity_received' => $validated['quantity_received'],
                 'quantity_unit' => $validated['unit'],
                 'receiving_location_gln' => $validated['receiving_location_gln'] ?? null,
                 'receiving_location_name' => $validated['receiving_location_name'] ?? null,
-                'harvest_location_gln' => $validated['harvest_location_gln'] ?? null, // KDE #8
-                'harvest_location_name' => $validated['harvest_location_name'] ?? null, // KDE #8
+                'harvest_location_gln' => $validated['harvest_location_gln'] ?? null,
+                'harvest_location_name' => $validated['harvest_location_name'] ?? null,
                 'business_name' => $validated['business_name'] ?? null,
                 'business_gln' => $validated['business_gln'] ?? null,
                 'business_address' => $validated['business_address'] ?? null,
                 'harvest_date' => $validated['harvest_date'] ?? null,
                 'pack_date' => $validated['pack_date'] ?? null,
-                'cooling_date' => $validated['cooling_date'] ?? null, // KDE #14
+                'cooling_date' => $validated['cooling_date'] ?? null,
                 'reference_doc' => $validated['reference_doc'],
-                'reference_doc_type' => $validated['reference_doc_type'] ?? null, // KDE #17
+                'reference_doc_type' => $validated['reference_doc_type'] ?? null,
                 'fda_compliance_notes' => $validated['fda_compliance_notes'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'created_by' => auth()->id(),
-                'traceability_lot_code' => $validated['tlc'],
+                'traceability_lot_code' => $tlc,
+                'organization_id' => auth()->user()->organization_id,
             ]);
+
+            $this->quotaService->incrementCTEUsage(auth()->user()->organization);
 
             if (auth()->user()->hasFeature('e_signatures')) {
                 try {
@@ -191,7 +202,7 @@ class CTEController extends Controller
 
             DB::commit();
             $this->loggingService->logCTEEventCreated('receiving', $cteEvent->id, [
-                'tlc' => $validated['tlc'],
+                'tlc' => $tlc,
                 'quantity' => $validated['quantity_received'],
                 'unit' => $validated['unit'],
             ]);
@@ -215,6 +226,8 @@ class CTEController extends Controller
         $activeTLCs = QueryOptimizationService::getActiveTraceRecords($currentUser->organization_id);
         $recentEvents = QueryOptimizationService::getRecentCTEEvents('transformation', $currentUser->organization_id, 10);
         
+        $generatedTLC = TLCGenerationService::generateUniqueTLC($currentUser->organization_id);
+        
         $this->loggingService->logBatch('Active TLCs loaded', $activeTLCs, 10);
         
         if ($this->loggingService->isDebugEnabled()) {
@@ -228,21 +241,23 @@ class CTEController extends Controller
             }
         }
         
-        return view('cte.transformation', compact('products', 'locations', 'activeTLCs', 'recentEvents'));
+        return view('cte.transformation', compact('products', 'locations', 'activeTLCs', 'recentEvents', 'generatedTLC'));
     }
 
     public function storeTransformation(Request $request)
     {
-        if (!auth()->user()->canCreateCteRecord()) {
+        try {
+            $this->quotaService->validateCTERecordCreation(auth()->user()->organization);
+        } catch (\Exception $e) {
             return back()->withInput()
-                ->with('error', __('messages.cte_record_limit_reached'));
+                ->with('error', __('messages.cte_record_limit_reached') . ': ' . $e->getMessage());
         }
 
         $validated = $request->validate([
-            'output_tlc' => 'required|string|max:100|unique:trace_records,tlc',
+            'output_tlc' => 'nullable|string|max:100',
             'product_id' => 'required|exists:products,id',
             'quantity' => 'required|numeric|min:0.01',
-            'quantity_unit' => 'required|string|max:20',
+            'unit' => 'required|string|max:20',
             'location_id' => 'required|exists:locations,id',
             'input_trace_record_ids' => 'required|array|min:1',
             'input_trace_record_ids.*' => 'exists:trace_records,id',
@@ -250,15 +265,17 @@ class CTEController extends Controller
             'output_tlcs' => 'nullable|string|max:500',
             'event_date' => 'required|date',
             'reference_doc' => 'nullable|string|max:100',
+            'reference_doc_type' => 'nullable|in:PO,Invoice,BOL,AWB,Other',
             'fda_compliance_notes' => 'nullable|string|max:500',
             'notes' => 'nullable|string',
+            'product_lot_code' => 'required|string|max:100',
         ]);
 
         DB::beginTransaction();
         try {
             $inputRecords = TraceRecord::whereIn('id', $validated['input_trace_record_ids'])
                 ->where('organization_id', auth()->user()->organization_id)
-                ->lockForUpdate() // Lock records to prevent race conditions
+                ->lockForUpdate()
                 ->get();
             
             foreach ($inputRecords as $inputRecord) {
@@ -299,13 +316,15 @@ class CTEController extends Controller
             $paths = $inputRecords->pluck('materialized_path')->filter()->toArray();
             $combinedPath = implode('', $paths) . $validated['output_tlc'] . '/';
 
+            $outputTlc = $validated['output_tlc'] ?? TLCGenerationService::generateUniqueTLC(auth()->user()->organization_id);
+
             $outputRecord = TraceRecord::create([
-                'tlc' => $validated['output_tlc'],
+                'tlc' => $outputTlc,
                 'product_id' => $validated['product_id'],
                 'quantity' => $validated['quantity'],
-                'available_quantity' => $validated['quantity'], // Per documentation: output starts with full quantity
+                'available_quantity' => $validated['quantity'],
                 'consumed_quantity' => 0,
-                'unit' => $validated['quantity_unit'],
+                'unit' => $validated['unit'],
                 'location_id' => $validated['location_id'],
                 'lot_code' => $validated['output_tlc'],
                 'materialized_path' => $combinedPath,
@@ -326,15 +345,18 @@ class CTEController extends Controller
                 'trace_record_id' => $outputRecord->id,
                 'event_date' => $validated['event_date'],
                 'location_id' => $validated['location_id'],
+                'product_lot_code' => $validated['product_lot_code'],
                 'input_tlcs' => $inputRecords->pluck('tlc')->toArray(),
                 'output_tlcs' => $outputTlcsArray,
                 'transformation_description' => $validated['transformation_description'],
                 'output_quantity' => $validated['quantity'],
                 'reference_doc' => $validated['reference_doc'] ?? null,
+                'reference_doc_type' => $validated['reference_doc_type'] ?? null,
                 'fda_compliance_notes' => $validated['fda_compliance_notes'] ?? null,
                 'notes' => $validated['notes'] ?? null,
                 'created_by' => auth()->id(),
-                'traceability_lot_code' => $validated['output_tlc'],
+                'traceability_lot_code' => $outputTlc,
+                'organization_id' => auth()->user()->organization_id,
             ]);
 
             $remainingNeeded = $validated['quantity'];
@@ -350,7 +372,7 @@ class CTEController extends Controller
                     'transformation_event_id' => $cteEvent->id,
                     'input_trace_record_id' => $inputRecord->id,
                     'quantity_used' => $amountToConsume,
-                    'unit' => $validated['quantity_unit'],
+                    'unit' => $validated['unit'],
                 ]);
                 
                 $inputRecord->consume($amountToConsume);
@@ -359,7 +381,8 @@ class CTEController extends Controller
                 DB::table('trace_relationships')->insert([
                     'parent_id' => $inputRecord->id,
                     'child_id' => $outputRecord->id,
-                    'relationship_type' => 'INPUT', // Standardized relationship type
+                    'relationship_type' => 'INPUT',
+                    'organization_id' => auth()->user()->organization_id,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -368,16 +391,19 @@ class CTEController extends Controller
             DB::table('trace_relationships')->insert([
                 'parent_id' => $outputRecord->id,
                 'child_id' => $outputRecord->id,
-                'relationship_type' => 'OUTPUT', // Standardized relationship type
+                'relationship_type' => 'OUTPUT',
+                'organization_id' => auth()->user()->organization_id,
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            $this->quotaService->incrementCTEUsage(auth()->user()->organization);
 
             QueryOptimizationService::clearOrganizationCache(auth()->user()->organization_id);
 
             DB::commit();
             $this->loggingService->logCTEEventCreated('transformation', $cteEvent->id, [
-                'output_tlc' => $validated['output_tlc'],
+                'output_tlc' => $outputTlc,
                 'input_count' => $inputRecords->count(),
                 'output_quantity' => $validated['quantity'],
                 'yield_percentage' => $yieldPercentage,
@@ -407,9 +433,11 @@ class CTEController extends Controller
 
     public function storeShipping(Request $request)
     {
-        if (!auth()->user()->canCreateCteRecord()) {
+        try {
+            $this->quotaService->validateCTERecordCreation(auth()->user()->organization);
+        } catch (\Exception $e) {
             return back()->withInput()
-                ->with('error', __('messages.cte_record_limit_reached'));
+                ->with('error', __('messages.cte_record_limit_reached') . ': ' . $e->getMessage());
         }
 
         $validated = $request->validate([
@@ -419,7 +447,7 @@ class CTEController extends Controller
             'quantities_shipped.*' => 'required|numeric|min:0.01',
             'location_id' => 'required|exists:locations,id',
             'partner_id' => 'required|exists:partners,id',
-            'shipping_location_gln' => 'nullable|string|regex:/^\d{13}$/',
+            'shipping_location_gln' => 'nullable|string|regex:/^(\d{13})?$/',
             'shipping_location_name' => 'required|string|max:255',
             'event_date' => 'required|date',
             'receiving_date_expected' => 'nullable|date|after_or_equal:event_date',
@@ -433,7 +461,7 @@ class CTEController extends Controller
             foreach ($validated['trace_record_ids'] as $index => $recordId) {
                 $traceRecord = TraceRecord::where('id', $recordId)
                     ->where('organization_id', auth()->user()->organization_id)
-                    ->lockForUpdate() // Lock to prevent race conditions
+                    ->lockForUpdate()
                     ->firstOrFail();
                 
                 $quantityToShip = $validated['quantities_shipped'][$index] ?? $traceRecord->available_quantity;
@@ -461,13 +489,14 @@ class CTEController extends Controller
                     'shipping_location_gln' => $validated['shipping_location_gln'] ?? null,
                     'shipping_location_name' => $validated['shipping_location_name'],
                     'shipping_date' => $validated['event_date'],
-                    'quantity_shipped' => $quantityToShip, // Added per documentation
+                    'quantity_shipped' => $quantityToShip,
                     'receiving_date_expected' => $validated['receiving_date_expected'] ?? null,
                     'shipping_reference_doc' => $validated['shipping_reference_doc'],
                     'fda_compliance_notes' => $validated['fda_compliance_notes'] ?? null,
                     'notes' => $validated['notes'] ?? null,
                     'created_by' => auth()->id(),
                     'traceability_lot_code' => $traceRecord->tlc,
+                    'organization_id' => auth()->user()->organization_id,
                 ]);
                 
                 $traceRecord->consume($quantityToShip);
@@ -475,12 +504,15 @@ class CTEController extends Controller
                 DB::table('trace_relationships')->insert([
                     'parent_id' => $traceRecord->id,
                     'child_id' => null,
-                    'relationship_type' => 'OUTPUT', // Standardized: shipping is OUTPUT (end of chain)
+                    'relationship_type' => 'OUTPUT',
                     'cte_event_id' => $cteEvent->id,
+                    'organization_id' => auth()->user()->organization_id,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
             }
+
+            $this->quotaService->incrementCTEUsage(auth()->user()->organization, count($validated['trace_record_ids']));
 
             QueryOptimizationService::clearOrganizationCache(auth()->user()->organization_id);
 
@@ -502,6 +534,10 @@ class CTEController extends Controller
     public function voidManagement(Request $request)
     {
         $currentUser = auth()->user();
+        
+        if (!$currentUser->isAdmin() && !$currentUser->isManager()) {
+            abort(403, 'Unauthorized to access void management');
+        }
         
         $query = CTEEvent::with(['traceRecord.product', 'voidedBy'])
             ->whereHas('traceRecord', function($q) use ($currentUser) {
@@ -567,10 +603,17 @@ class CTEController extends Controller
 
     public function voidAndReentry(Request $request, $eventId)
     {
+        $currentUser = auth()->user();
+        
         $event = CTEEvent::where('id', $eventId)
+            ->whereHas('traceRecord', function($q) use ($currentUser) {
+                $q->where('organization_id', $currentUser->organization_id);
+            })
             ->where('status', 'active')
-            ->lockForUpdate() // CRITICAL: Lock row to prevent concurrent void attempts
+            ->lockForUpdate()
             ->firstOrFail();
+        
+        $this->authorize('void', $event);
         
         if ($event->void_count >= 1) {
             return back()->with('error', __('messages.event_already_voided_once'));
@@ -578,10 +621,14 @@ class CTEController extends Controller
         
         $user = auth()->user();
         $canVoid = $user->isAdmin() || 
-                   $event->created_at->diffInHours(now()) <= 2;
+                   ($user->isManager() && $event->created_at->diffInHours(now()) <= 2);
         
         if (!$canVoid) {
             return back()->with('error', __('messages.void_not_allowed'));
+        }
+
+        if (!$user->hasFeature('e_signatures')) {
+            return back()->with('error', 'Void Event requires E-Signature feature. Please upgrade your package to use this feature.');
         }
 
         $validated = $request->validate([
@@ -636,7 +683,12 @@ class CTEController extends Controller
     
     public function showReentryForm($eventId)
     {
+        $currentUser = auth()->user();
+        
         $voidedEvent = CTEEvent::where('id', $eventId)
+            ->whereHas('traceRecord', function($q) use ($currentUser) {
+                $q->where('organization_id', $currentUser->organization_id);
+            })
             ->where('status', 'voided')
             ->firstOrFail();
         
@@ -648,11 +700,8 @@ class CTEController extends Controller
                 $locations = QueryOptimizationService::getActiveLocations($currentUser->organization_id);
                 $suppliers = QueryOptimizationService::getPartnersByType($currentUser->organization_id, 'supplier');
                 
-                // This ensures $recentEvents contains CTEEvent models with traceRecord relationship
                 $recentEvents = CTEEvent::with(['traceRecord.product', 'partner', 'location'])
-                    ->whereHas('traceRecord', function($q) use ($currentUser) {
-                        $q->where('organization_id', $currentUser->organization_id);
-                    })
+                    ->forOrganization($currentUser->organization_id)
                     ->where('event_type', 'receiving')
                     ->orderBy('event_date', 'desc')
                     ->limit(10)
@@ -667,9 +716,7 @@ class CTEController extends Controller
                 $customers = QueryOptimizationService::getPartnersByType($currentUser->organization_id, 'customer');
                 
                 $recentEvents = CTEEvent::with(['traceRecord.product', 'partner', 'location'])
-                    ->whereHas('traceRecord', function($q) use ($currentUser) {
-                        $q->where('organization_id', $currentUser->organization_id);
-                    })
+                    ->forOrganization($currentUser->organization_id)
                     ->where('event_type', 'shipping')
                     ->orderBy('event_date', 'desc')
                     ->limit(10)
@@ -684,9 +731,7 @@ class CTEController extends Controller
                 $activeTLCs = QueryOptimizationService::getActiveTraceRecords($currentUser->organization_id);
                 
                 $recentEvents = CTEEvent::with(['traceRecord.product', 'partner', 'location'])
-                    ->whereHas('traceRecord', function($q) use ($currentUser) {
-                        $q->where('organization_id', $currentUser->organization_id);
-                    })
+                    ->forOrganization($currentUser->organization_id)
                     ->where('event_type', 'transformation')
                     ->orderBy('event_date', 'desc')
                     ->limit(10)

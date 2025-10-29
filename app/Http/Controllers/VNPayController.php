@@ -6,12 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Models\PaymentOrder;
+use App\Models\Package;
+use App\Services\CTEQuotaSyncService;
 
 class VNPayController extends Controller
 {
-    public function __construct()
+    protected $quotaSyncService;
+
+    public function __construct(CTEQuotaSyncService $quotaSyncService)
     {
         $this->middleware('auth')->except(['ipn']);
+        $this->quotaSyncService = $quotaSyncService;
     }
 
     public function createPayment(Request $request)
@@ -22,10 +27,14 @@ class VNPayController extends Controller
         ]);
 
         $user = Auth::user();
+        $organization = $user->organization;
+        
+        if (!$organization) {
+            return back()->with('error', 'Người dùng phải thuộc một tổ chức.');
+        }
         
         // Get package details
-        $packages = $this->getPackages();
-        $package = collect($packages)->firstWhere('id', $validated['package_id']);
+        $package = Package::where('id', $validated['package_id'])->first();
         
         if (!$package) {
             return back()->with('error', 'Gói dịch vụ không hợp lệ');
@@ -39,13 +48,13 @@ class VNPayController extends Controller
         try {
             // Determine price based on billing period
             $amount = $validated['billing_period'] === 'monthly' 
-                ? $package['monthly_price'] 
-                : $package['yearly_price'];
+                ? $package->monthly_selling_price 
+                : $package->yearly_selling_price;
             
             // Create unique order ID
-            $orderId = 'FSMA204_' . $user->id . '_' . time();
+            $orderId = 'FSMA204_' . $organization->id . '_' . time();
             
-            $idempotencyKey = hash('sha256', $user->id . $package['id'] . $validated['billing_period'] . date('Y-m-d H:i'));
+            $idempotencyKey = hash('sha256', $organization->id . $package->id . $validated['billing_period'] . date('Y-m-d H:i'));
             
             $existingOrder = PaymentOrder::where('idempotency_key', $idempotencyKey)
                 ->where('status', 'pending')
@@ -54,7 +63,7 @@ class VNPayController extends Controller
             
             if ($existingOrder && !$existingOrder->isExpired()) {
                 Log::warning('Duplicate payment attempt detected', [
-                    'user_id' => $user->id,
+                    'organization_id' => $organization->id,
                     'idempotency_key' => $idempotencyKey,
                     'existing_order_id' => $existingOrder->order_id,
                 ]);
@@ -68,7 +77,7 @@ class VNPayController extends Controller
             $vnp_Returnurl = route('vnpay.return');
             
             $vnp_TxnRef = $orderId;
-            $vnp_OrderInfo = 'Thanh toán gói ' . $package['name'] . ' - ' . ($validated['billing_period'] === 'monthly' ? 'Tháng' : 'Năm');
+            $vnp_OrderInfo = 'Thanh toán gói ' . $package->name . ' - ' . ($validated['billing_period'] === 'monthly' ? 'Tháng' : 'Năm');
             $vnp_OrderType = 'billpayment';
             $vnp_Amount = $amount * 100; // VNPay uses smallest currency unit
             $vnp_Locale = 'vn';
@@ -97,15 +106,13 @@ class VNPayController extends Controller
             $paymentOrder = PaymentOrder::create([
                 'user_id' => $user->id,
                 'order_id' => $orderId,
-                'package_id' => $package['id'],
+                'package_id' => $package->id,
                 'billing_period' => $validated['billing_period'],
                 'amount' => $amount,
                 'status' => 'pending',
                 'idempotency_key' => $idempotencyKey,
                 'metadata' => [
-                    'max_cte_records' => $package['max_cte_records'],
-                    'max_documents' => $package['max_documents'],
-                    'max_users' => $package['max_users'],
+                    'organization_id' => $organization->id,
                 ],
                 'ip_address' => $request->ip(),
                 'user_agent' => $request->userAgent(),
@@ -205,8 +212,9 @@ class VNPayController extends Controller
             }
             
             $user = $paymentOrder->user;
+            $organization = $user->organization;
             
-            if ($user) {
+            if ($user && $organization) {
                 $verifyResult = $this->verifyPaymentWithVNPay($request->vnp_TxnRef, $paymentOrder->amount);
                 
                 if (!$verifyResult['success']) {
@@ -218,31 +226,33 @@ class VNPayController extends Controller
                     return redirect()->route('pricing')->with('error', 'Xác minh thanh toán thất bại. Vui lòng liên hệ hỗ trợ.');
                 }
                 
-                // Update user package
-                $user->update([
+                $organization->update([
                     'package_id' => $paymentOrder->package_id,
-                    'max_cte_records_monthly' => $paymentOrder->metadata['max_cte_records'],
-                    'max_documents' => $paymentOrder->metadata['max_documents'],
-                    'max_users' => $paymentOrder->metadata['max_users'],
-                    'vnpay_transaction_id' => $request->vnp_TransactionNo,
-                    'vnpay_order_id' => $orderId,
-                    'payment_gateway' => 'vnpay',
-                    'subscription_status' => 'active',
-                    'last_payment_date' => now(),
-                    'subscription_ends_at' => $paymentOrder->billing_period === 'monthly' 
-                        ? now()->addMonth() 
-                        : now()->addYear(),
                 ]);
+                
+                // Sync quotas with new package
+                try {
+                    $this->quotaSyncService->syncOrganizationQuota($organization->id);
+                    Log::info('Quotas synced after VNPay payment', [
+                        'organization_id' => $organization->id,
+                        'package_id' => $paymentOrder->package_id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to sync quotas after VNPay payment: ' . $e->getMessage(), [
+                        'organization_id' => $organization->id,
+                    ]);
+                }
                 
                 // Mark order as completed
                 $paymentOrder->markAsCompleted($request->vnp_TransactionNo, 'vnpay');
                 
                 // Get package details for display
-                $packages = $this->getPackages();
-                $package = collect($packages)->firstWhere('id', $paymentOrder->package_id);
+                $package = Package::withoutGlobalScope(\App\Traits\HasOrganizationScope::class)
+                    ->where('id', $paymentOrder->package_id)
+                    ->first();
                 
                 Log::info('Payment successful', [
-                    'user_id' => $user->id,
+                    'organization_id' => $organization->id,
                     'order_id' => $orderId,
                     'amount' => $paymentOrder->amount,
                 ]);
@@ -327,8 +337,9 @@ class VNPayController extends Controller
         if ($request->vnp_ResponseCode == '00') {
             // Payment successful
             $user = $paymentOrder->user;
+            $organization = $user->organization;
             
-            if ($user) {
+            if ($user && $organization) {
                 $paidAmount = $request->vnp_Amount / 100;
                 if ($paidAmount != $paymentOrder->amount) {
                     Log::error('VNPay IPN: Amount mismatch', [
@@ -341,21 +352,22 @@ class VNPayController extends Controller
                     return response()->json($returnData);
                 }
                 
-                // Update user package
-                $user->update([
+                $organization->update([
                     'package_id' => $paymentOrder->package_id,
-                    'max_cte_records_monthly' => $paymentOrder->metadata['max_cte_records'],
-                    'max_documents' => $paymentOrder->metadata['max_documents'],
-                    'max_users' => $paymentOrder->metadata['max_users'],
-                    'vnpay_transaction_id' => $request->vnp_TransactionNo,
-                    'vnpay_order_id' => $orderId,
-                    'payment_gateway' => 'vnpay',
-                    'subscription_status' => 'active',
-                    'last_payment_date' => now(),
-                    'subscription_ends_at' => $paymentOrder->billing_period === 'monthly' 
-                        ? now()->addMonth() 
-                        : now()->addYear(),
                 ]);
+                
+                // Sync quotas with new package
+                try {
+                    $this->quotaSyncService->syncOrganizationQuota($organization->id);
+                    Log::info('Quotas synced after VNPay IPN', [
+                        'organization_id' => $organization->id,
+                        'package_id' => $paymentOrder->package_id,
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to sync quotas after VNPay IPN: ' . $e->getMessage(), [
+                        'organization_id' => $organization->id,
+                    ]);
+                }
                 
                 // Mark order as completed
                 $paymentOrder->markAsCompleted($request->vnp_TransactionNo, 'vnpay');
@@ -364,12 +376,12 @@ class VNPayController extends Controller
                 $returnData['Message'] = 'Confirm Success';
                 
                 Log::info('VNPay IPN: Payment confirmed', [
-                    'user_id' => $user->id,
+                    'organization_id' => $organization->id,
                     'order_id' => $orderId,
                 ]);
             } else {
                 $returnData['RspCode'] = '01';
-                $returnData['Message'] = 'User not found';
+                $returnData['Message'] = 'User or organization not found';
             }
         } else {
             $returnData['RspCode'] = '00';
@@ -402,41 +414,5 @@ class VNPayController extends Controller
                 'message' => $e->getMessage(),
             ];
         }
-    }
-
-    private function getPackages()
-    {
-        return [
-            [
-                'id' => 'basic',
-                'name' => 'Basic',
-                'description' => 'Hoàn hảo cho doanh nghiệp nhỏ',
-                'monthly_price' => 500000,
-                'yearly_price' => 5000000,
-                'max_cte_records' => 500,
-                'max_documents' => 10,
-                'max_users' => 1,
-            ],
-            [
-                'id' => 'premium',
-                'name' => 'Premium',
-                'description' => 'Dành cho doanh nghiệp đang phát triển',
-                'monthly_price' => 2000000,
-                'yearly_price' => 20000000,
-                'max_cte_records' => 2500,
-                'max_documents' => 0,
-                'max_users' => 3,
-            ],
-            [
-                'id' => 'enterprise',
-                'name' => 'Enterprise',
-                'description' => 'Dành cho tổ chức lớn',
-                'monthly_price' => 5000000,
-                'yearly_price' => 50000000,
-                'max_cte_records' => 5000,
-                'max_documents' => 0,
-                'max_users' => 999999,
-            ],
-        ];
     }
 }

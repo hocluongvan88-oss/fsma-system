@@ -194,7 +194,7 @@
             @forelse($recentEvents as $event)
             <div style="padding: 1rem; background: var(--bg-tertiary); border-radius: 0.5rem; {{ $event->is_voided ? 'opacity: 0.6; border: 2px dashed var(--danger);' : '' }}">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <strong>{{ $event->traceRecord->tlc }}</strong>
+                    <strong>{{ $event->traceRecord?->tlc ?? 'N/A' }}</strong>
                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                         <span class="badge badge-warning">{{ __('messages.shipping') }}</span>
                         @if($event->is_voided)
@@ -203,16 +203,16 @@
                     </div>
                 </div>
                 <div style="font-size: 0.875rem; color: var(--text-secondary);">
-                    {{ $event->traceRecord->product->product_name }}<br>
+                    {{ $event->traceRecord?->product?->product_name ?? __('messages.product_deleted') }}<br>
                     <!-- CHANGE: Display quantity_shipped instead of quantity_received -->
-                    {{ $event->quantity_shipped ?? $event->traceRecord->quantity }} {{ $event->traceRecord->unit }}<br>
-                    {{ __('messages.to') }}: {{ $event->partner->partner_name }}<br>
+                    {{ $event->quantity_shipped ?? $event->traceRecord?->quantity ?? 'N/A' }} {{ $event->traceRecord?->unit ?? '' }}<br>
+                    {{ __('messages.to') }}: {{ $event->partner?->partner_name ?? 'N/A' }}<br>
                     {{ $event->event_date->format('Y-m-d H:i') }}
                     
                     @if($event->is_voided)
                         <br>
                         <span style="color: var(--danger); font-weight: 600;">
-                            {{ __('messages.voided_by') }}: {{ $event->voidedBy->full_name ?? 'System' }}<br>
+                            {{ __('messages.voided_by') }}: {{ $event->voidedBy?->full_name ?? 'System' }}<br>
                             {{ __('messages.voided_at') }}: {{ $event->voided_at ? $event->voided_at->format('Y-m-d H:i') : 'N/A' }}
                         </span>
                     @endif
@@ -238,7 +238,7 @@
                                 class="btn btn-sm btn-danger void-event-btn" 
                                 data-event-id="{{ $event->id }}"
                                 data-event-type="shipping"
-                                data-tlc="{{ $event->traceRecord->tlc }}"
+                                data-tlc="{{ $event->traceRecord?->tlc ?? 'N/A' }}"
                                 style="margin-top: 0.5rem; font-size: 0.75rem;">
                             {{ __('messages.void_event') }}
                         </button>

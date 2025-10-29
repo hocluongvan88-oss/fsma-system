@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
 
 class AuditLogDetail extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $table = 'audit_logs_details';
     
@@ -15,6 +16,7 @@ class AuditLogDetail extends Model
 
     protected $fillable = [
         'audit_log_id',
+        'organization_id',
         'ip_address',
         'user_agent',
         'old_values',
@@ -33,5 +35,10 @@ class AuditLogDetail extends Model
     public function auditLog()
     {
         return $this->belongsTo(AuditLog::class, 'audit_log_id');
+    }
+    
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
     }
 }

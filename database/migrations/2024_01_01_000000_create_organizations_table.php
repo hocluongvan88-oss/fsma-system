@@ -8,24 +8,32 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     * Cần chạy TRƯỚC bảng 'locations' để Foreign Key hoạt động.
      */
     public function up(): void
     {
         Schema::create('organizations', function (Blueprint $table) {
-            $table->id();
-            $table->string('name')->unique();
-            $table->string('contact_person')->nullable();
-            $table->string('phone', 20)->nullable();
-            $table->string('email')->nullable();
-            $table->text('address')->nullable();
-            $table->enum('status', ['active', 'inactive'])->default('active');
+            // Sử dụng id() để có cột ID tự động tăng
+            $table->id(); 
 
-            // Thêm cột cần thiết cho việc tuân thủ quy định (GACC/FDA)
-            $table->string('registration_number')->nullable()->comment('Mã đăng ký GACC/FDA');
+            // Thông tin cơ bản
+            $table->string('name')->unique();
+            $table->text('description')->nullable(); // Cột này cần thiết cho Seeder
+
+            // Cấu hình tài khoản và gói dịch vụ
+            $table->boolean('is_active')->default(true);
+            $table->string('package_id', 50)->default('basic')->comment('Gói dịch vụ: basic, premium, enterprise');
             
-            $table->timestamps();
-            $table->softDeletes(); // Nếu bạn sử dụng soft deletes
+            // Giới hạn dữ liệu
+            $table->integer('max_users')->default(1)->comment('Số lượng user tối đa');
+            $table->integer('max_cte_records_monthly')->default(500)->comment('Số lượng CTE tối đa mỗi tháng');
+            $table->integer('max_documents')->default(10)->comment('Số lượng tài liệu lưu trữ tối đa');
+            
+            // Thời hạn đăng ký
+            $table->timestamp('subscription_start_date')->nullable();
+            $table->timestamp('subscription_end_date')->nullable();
+            
+            // Các cột thời gian chuẩn của Laravel
+            $table->timestamps(); 
         });
     }
 

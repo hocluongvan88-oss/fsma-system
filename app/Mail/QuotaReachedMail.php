@@ -16,41 +16,38 @@ class QuotaReachedMail extends Mailable
     public $usedQuota;
     public $totalQuota;
     public $upgradeUrl;
+    public $userEmailToken;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct($userName, $usedQuota, $totalQuota, $upgradeUrl)
+    public function __construct($userName, $usedQuota, $totalQuota, $upgradeUrl, $userEmailToken = '')
     {
         $this->userName = $userName;
         $this->usedQuota = $usedQuota;
         $this->totalQuota = $totalQuota;
         $this->upgradeUrl = $upgradeUrl;
+        $this->userEmailToken = $userEmailToken;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '🚨 Khẩn cấp: Bạn đã hết dung lượng!',
+            subject: __('messages.quota_reached'),
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
+    public function headers(): array
+    {
+        return [
+            'List-Unsubscribe' => '<' . route('email.unsubscribe', ['token' => $this->userEmailToken]) . '>',
+        ];
+    }
+
     public function content(): Content
     {
         return new Content(
-            view: 'emails.quota-reached',
+            view: 'email.quota-reached',
         );
     }
 
-    /**
-     * Get the attachments for the message.
-     */
     public function attachments(): array
     {
         return [];

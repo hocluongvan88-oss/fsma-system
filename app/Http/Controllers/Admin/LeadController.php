@@ -9,10 +9,25 @@ use Illuminate\Support\Facades\Log;
 
 class LeadController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(function ($request, $next) {
+            if (!auth()->user()->isAdmin() && !auth()->user()->isManager()) {
+                abort(403, 'Unauthorized access to leads management.');
+            }
+            return $next($request);
+        });
+    }
+
     // Show leads list
     public function index(Request $request)
     {
+        $currentUser = auth()->user();
         $query = Lead::query();
+
+        if ($currentUser->organization_id) {
+            $query->where('organization_id', $currentUser->organization_id);
+        }
 
         // Filter by status
         if ($request->has('status') && $request->status !== 'all') {
@@ -47,13 +62,13 @@ class LeadController extends Controller
 
         // Get statistics
         $stats = [
-            'total' => Lead::count(),
-            'new' => Lead::new()->count(),
-            'contacted' => Lead::contacted()->count(),
-            'qualified' => Lead::qualified()->count(),
-            'converted' => Lead::converted()->count(),
-            'this_month' => Lead::thisMonth()->count(),
-            'this_week' => Lead::thisWeek()->count(),
+            'total' => Lead::where('organization_id', $currentUser->organization_id)->count(),
+            'new' => Lead::where('organization_id', $currentUser->organization_id)->new()->count(),
+            'contacted' => Lead::where('organization_id', $currentUser->organization_id)->contacted()->count(),
+            'qualified' => Lead::where('organization_id', $currentUser->organization_id)->qualified()->count(),
+            'converted' => Lead::where('organization_id', $currentUser->organization_id)->converted()->count(),
+            'this_month' => Lead::where('organization_id', $currentUser->organization_id)->thisMonth()->count(),
+            'this_week' => Lead::where('organization_id', $currentUser->organization_id)->thisWeek()->count(),
             'conversion_rate' => $this->calculateConversionRate(),
         ];
 
@@ -63,18 +78,22 @@ class LeadController extends Controller
     // Show lead details
     public function show(Lead $lead)
     {
+        $this->authorizeLeadAccess($lead);
         return view('admin.leads.show', compact('lead'));
     }
 
     // Edit lead
     public function edit(Lead $lead)
     {
+        $this->authorizeLeadAccess($lead);
         return view('admin.leads.edit', compact('lead'));
     }
 
     // Update lead
     public function update(Request $request, Lead $lead)
     {
+        $this->authorizeLeadAccess($lead);
+
         $validated = $request->validate([
             'full_name' => 'required|string|max:100',
             'email' => 'required|email|max:100',
@@ -98,6 +117,7 @@ class LeadController extends Controller
             'lead_id' => $lead->id,
             'email' => $lead->email,
             'status' => $validated['status'],
+            'user_id' => auth()->id(),
         ]);
 
         return redirect()->route('admin.leads.show', $lead)
@@ -107,11 +127,14 @@ class LeadController extends Controller
     // Delete lead
     public function destroy(Lead $lead)
     {
+        $this->authorizeLeadAccess($lead);
+
         $lead->delete();
 
         Log::info('Lead deleted', [
             'lead_id' => $lead->id,
             'email' => $lead->email,
+            'user_id' => auth()->id(),
         ]);
 
         return redirect()->route('admin.leads.index')
@@ -121,14 +144,18 @@ class LeadController extends Controller
     // Get statistics
     public function statistics()
     {
+        $currentUser = auth()->user();
+        
+        $baseQuery = Lead::where('organization_id', $currentUser->organization_id);
+
         $stats = [
-            'total_leads' => Lead::count(),
-            'new_leads' => Lead::new()->count(),
-            'contacted_leads' => Lead::contacted()->count(),
-            'qualified_leads' => Lead::qualified()->count(),
-            'converted_leads' => Lead::converted()->count(),
-            'this_month' => Lead::thisMonth()->count(),
-            'this_week' => Lead::thisWeek()->count(),
+            'total_leads' => $baseQuery->count(),
+            'new_leads' => $baseQuery->new()->count(),
+            'contacted_leads' => $baseQuery->contacted()->count(),
+            'qualified_leads' => $baseQuery->qualified()->count(),
+            'converted_leads' => $baseQuery->converted()->count(),
+            'this_month' => $baseQuery->thisMonth()->count(),
+            'this_week' => $baseQuery->thisWeek()->count(),
             'conversion_rate' => $this->calculateConversionRate(),
             'leads_by_source' => $this->getLeadsBySource(),
             'leads_by_industry' => $this->getLeadsByIndustry(),
@@ -141,7 +168,8 @@ class LeadController extends Controller
     // Export leads to CSV
     public function export(Request $request)
     {
-        $query = Lead::query();
+        $currentUser = auth()->user();
+        $query = Lead::where('organization_id', $currentUser->organization_id);
 
         if ($request->has('status') && $request->status !== 'all') {
             $query->where('status', $request->status);
@@ -206,10 +234,20 @@ class LeadController extends Controller
         return response()->stream($callback, 200, $headers);
     }
 
+    private function authorizeLeadAccess(Lead $lead)
+    {
+        $currentUser = auth()->user();
+        if ($lead->organization_id !== $currentUser->organization_id) {
+            abort(403, 'Unauthorized access to this lead.');
+        }
+    }
+
     // Get leads by source
     private function getLeadsBySource()
     {
-        return Lead::selectRaw('source, COUNT(*) as count')
+        $currentUser = auth()->user();
+        return Lead::where('organization_id', $currentUser->organization_id)
+                   ->selectRaw('source, COUNT(*) as count')
                    ->groupBy('source')
                    ->get()
                    ->pluck('count', 'source')
@@ -219,7 +257,9 @@ class LeadController extends Controller
     // Get leads by industry
     private function getLeadsByIndustry()
     {
-        return Lead::selectRaw('industry, COUNT(*) as count')
+        $currentUser = auth()->user();
+        return Lead::where('organization_id', $currentUser->organization_id)
+                   ->selectRaw('industry, COUNT(*) as count')
                    ->whereNotNull('industry')
                    ->groupBy('industry')
                    ->orderByRaw('count DESC')
@@ -232,7 +272,9 @@ class LeadController extends Controller
     // Get leads by date (last 30 days)
     private function getLeadsByDate()
     {
-        return Lead::selectRaw('DATE(created_at) as date, COUNT(*) as count')
+        $currentUser = auth()->user();
+        return Lead::where('organization_id', $currentUser->organization_id)
+                   ->selectRaw('DATE(created_at) as date, COUNT(*) as count')
                    ->where('created_at', '>=', now()->subDays(30))
                    ->groupBy('date')
                    ->orderBy('date')
@@ -244,12 +286,13 @@ class LeadController extends Controller
     // Calculate conversion rate
     private function calculateConversionRate()
     {
-        $total = Lead::count();
+        $currentUser = auth()->user();
+        $total = Lead::where('organization_id', $currentUser->organization_id)->count();
         if ($total === 0) {
             return 0;
         }
 
-        $converted = Lead::converted()->count();
+        $converted = Lead::where('organization_id', $currentUser->organization_id)->converted()->count();
         return round(($converted / $total) * 100, 2);
     }
 }

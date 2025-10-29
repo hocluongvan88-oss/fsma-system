@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Database\Eloquent\Casts\Attribute;
+use App\Traits\HasOrganizationScope;
+use Illuminate\Support\Facades\Auth;
 
 class ESignature extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $table = 'e_signatures';
 
@@ -77,6 +79,7 @@ class ESignature extends Model
         'expiration_status',
         'encryption_algorithm',
         'encrypted_fields',
+        'organization_id',
     ];
 
     protected $casts = [
@@ -106,11 +109,6 @@ class ESignature extends Model
         'expiration_checked_at' => 'datetime',
     ];
 
-    /*
-    |--------------------------------------------------------------------------
-    | Accessors & Mutators (Tự động mã hóa & giải mã dữ li��u nhạy cảm)
-    |--------------------------------------------------------------------------
-    */
     protected function signatureHash(): Attribute
     {
         return Attribute::make(
@@ -143,11 +141,6 @@ class ESignature extends Model
         );
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Relationships
-    |--------------------------------------------------------------------------
-    */
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -168,11 +161,11 @@ class ESignature extends Model
         return $this->belongsTo(User::class, 'delegated_by_user_id');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Query Scopes
-    |--------------------------------------------------------------------------
-    */
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
     public function scopeByRecord($query, string $type, int $id)
     {
         return $query->where('record_type', $type)
@@ -189,11 +182,6 @@ class ESignature extends Model
         return $query->where('signed_at', '>=', now()->subDays($days));
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Business Logic
-    |--------------------------------------------------------------------------
-    */
     public static function createSignature(
         User $user,
         string $recordType,
@@ -202,16 +190,13 @@ class ESignature extends Model
         string $password,
         ?string $reason = null
     ): self {
-        // 1️⃣ Kiểm tra mật khẩu người ký
         if (!Hash::check($password, $user->password)) {
             throw new \Exception('Invalid password for e-signature');
         }
 
-        // 2️⃣ Lấy nội dung bản ghi để băm
         $recordContent = self::getRecordContent($recordType, $recordId);
         $recordContentHash = hash('sha512', $recordContent);
 
-        // 3️⃣ Tạo dữ liệu chữ ký
         $signatureData = implode('|', [
             $user->id,
             $recordContentHash,
@@ -221,7 +206,6 @@ class ESignature extends Model
             $action,
         ]);
 
-        // 4️⃣ Tạo bản ghi chữ ký
         return self::create([
             'user_id' => $user->id,
             'record_type' => $recordType,
@@ -235,6 +219,7 @@ class ESignature extends Model
             'user_agent' => request()->userAgent(),
             'timestamp_token' => uniqid(),
             'signed_at' => now(),
+            'organization_id' => Auth::check() ? Auth::user()->organization_id : null,
         ]);
     }
 
@@ -261,11 +246,6 @@ class ESignature extends Model
         return hash_equals($expectedHash, $this->signature_hash);
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | Helper
-    |--------------------------------------------------------------------------
-    */
     private static function getRecordContent(string $recordType, int $recordId): string
     {
         $recordTypeModel = SignatureRecordType::where('record_type', $recordType)->first();
@@ -278,5 +258,16 @@ class ESignature extends Model
         } catch (\Throwable $e) {
             return json_encode(['error' => $e->getMessage()]);
         }
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($signature) {
+            if (empty($signature->organization_id) && Auth::check()) {
+                $signature->organization_id = Auth::user()->organization_id;
+            }
+        });
     }
 }

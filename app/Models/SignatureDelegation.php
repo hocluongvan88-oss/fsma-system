@@ -4,9 +4,12 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\HasOrganizationScope;
 
 class SignatureDelegation extends Model
 {
+    use HasOrganizationScope;
+
     protected $fillable = [
         'delegator_user_id',
         'delegatee_user_id',

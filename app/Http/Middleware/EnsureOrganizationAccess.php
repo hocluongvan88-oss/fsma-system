@@ -15,6 +15,10 @@ class EnsureOrganizationAccess extends Middleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        if (auth()->check() && auth()->user()->isAdmin()) {
+            return $next($request);
+        }
+
         if (!auth()->check() || !auth()->user()->organization_id) {
             abort(403, 'User must belong to an organization.');
         }

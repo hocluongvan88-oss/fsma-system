@@ -13,6 +13,8 @@ class DigitalCertificateController extends Controller
     public function __construct(DigitalCertificateService $certificateService)
     {
         $this->certificateService = $certificateService;
+        $this->middleware('auth');
+        $this->middleware('package.feature:certificates');
     }
 
     /**

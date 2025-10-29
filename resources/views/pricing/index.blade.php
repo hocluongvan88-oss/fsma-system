@@ -10,6 +10,48 @@
     </div>
 </div>
 
+{{-- Add current quota status banner if available --}}
+@if(isset($currentQuota) && $currentQuota)
+<div class="card" style="background: var(--bg-tertiary); border-left: 4px solid var(--accent-primary); margin-bottom: 2rem;">
+    <h3 style="font-size: 1.125rem; font-weight: 700; margin-bottom: 1rem;">{{ __('messages.current_usage') }}</h3>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">{{ __('messages.cte_records') }}</div>
+            <div style="font-size: 1.25rem; font-weight: 600;">
+                {{ number_format($currentQuota['cte_records']['used'] ?? 0) }} / 
+                {{ ($currentQuota['cte_records']['limit'] ?? 0) == 0 ? __('messages.unlimited') : number_format($currentQuota['cte_records']['limit'] ?? 0) }}
+            </div>
+            @if(($currentQuota['cte_records']['limit'] ?? 0) > 0)
+            <div style="width: 100%; height: 4px; background: var(--bg-secondary); border-radius: 2px; margin-top: 0.5rem; overflow: hidden;">
+                <div style="width: {{ min(100, (($currentQuota['cte_records']['used'] ?? 0) / ($currentQuota['cte_records']['limit'] ?? 1)) * 100) }}%; height: 100%; background: {{ ($currentQuota['cte_records']['percentage'] ?? 0) >= 80 ? 'var(--danger)' : 'var(--success)' }};"></div>
+            </div>
+            @endif
+        </div>
+        <div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">{{ __('messages.documents') }}</div>
+            <div style="font-size: 1.25rem; font-weight: 600;">
+                {{ number_format($currentQuota['documents']['used'] ?? 0) }} / 
+                {{ ($currentQuota['documents']['limit'] ?? 0) == 0 ? __('messages.unlimited') : number_format($currentQuota['documents']['limit'] ?? 0) }}
+            </div>
+        </div>
+        <div>
+            <div style="font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.25rem;">{{ __('messages.users') }}</div>
+            <div style="font-size: 1.25rem; font-weight: 600;">
+                {{ number_format($currentQuota['users']['used'] ?? 0) }} / 
+                {{ ($currentQuota['users']['limit'] ?? 0) == 0 ? __('messages.unlimited') : number_format($currentQuota['users']['limit'] ?? 0) }}
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
+{{-- Fix i18n translation key display and add fallback message --}}
+@if(empty($packages))
+<div class="card" style="background: var(--danger); color: white; text-align: center; padding: 2rem;">
+    <h3 style="font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem;">{{ __('messages.no_packages_available') ?? 'No Packages Available' }}</h3>
+    <p>{{ __('messages.contact_admin_for_packages') ?? 'Please contact administrator for available packages' }}</p>
+</div>
+@else
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
     @foreach($packages as $package)
     <div class="card" style="position: relative; {{ $package['is_highlighted'] ? 'border: 2px solid var(--accent-primary); box-shadow: 0 10px 30px rgba(59, 130, 246, 0.3);' : '' }}">
@@ -218,19 +260,35 @@
                 <tr>
                     <td>{{ __('messages.cte_records_per_month') }}</td>
                     @foreach($packages as $package)
-                    <td>{{ $package['max_cte_records'] == 0 ? __('messages.unlimited') : number_format($package['max_cte_records']) }}</td>
+                    <td>
+                        {{-- Show quota details with sync status --}}
+                        {{ $package['max_cte_records'] == 0 ? __('messages.unlimited') : number_format($package['max_cte_records']) }}
+                        @if(isset($package['quota_synced']) && $package['quota_synced'])
+                        <span style="color: var(--success); font-size: 0.75rem; margin-left: 0.25rem;" title="{{ __('messages.quota_synced') }}">✓</span>
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 <tr>
                     <td>{{ __('messages.documents') }}</td>
                     @foreach($packages as $package)
-                    <td>{{ $package['max_documents'] == 0 ? __('messages.unlimited') : $package['max_documents'] }}</td>
+                    <td>
+                        {{ $package['max_documents'] == 0 ? __('messages.unlimited') : $package['max_documents'] }}
+                        @if(isset($package['quota_synced']) && $package['quota_synced'])
+                        <span style="color: var(--success); font-size: 0.75rem; margin-left: 0.25rem;" title="{{ __('messages.quota_synced') }}">✓</span>
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 <tr>
                     <td>{{ __('messages.users') }}</td>
                     @foreach($packages as $package)
-                    <td>{{ $package['max_users'] == 0 ? __('messages.unlimited') : $package['max_users'] }}</td>
+                    <td>
+                        {{ $package['max_users'] == 0 ? __('messages.unlimited') : $package['max_users'] }}
+                        @if(isset($package['quota_synced']) && $package['quota_synced'])
+                        <span style="color: var(--success); font-size: 0.75rem; margin-left: 0.25rem;" title="{{ __('messages.quota_synced') }}">✓</span>
+                        @endif
+                    </td>
                     @endforeach
                 </tr>
                 @foreach(['Traceability', 'Export Excel/PDF', 'Advanced Reports', 'Digital Signature', '21 CFR Part 11', 'API Access'] as $feature)
@@ -245,6 +303,7 @@
         </table>
     </div>
 </div>
+@endif
 
 <div class="card" style="background: var(--bg-tertiary); border-left: 4px solid var(--accent-primary);">
     <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">{{ __('messages.secure_payment') }}</h3>

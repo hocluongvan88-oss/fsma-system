@@ -1,48 +1,49 @@
-@extends('emails.layout')
+@extends('email.layout')
 
-@section('title', 'Cảnh báo dung lượng')
-
-@section('header-title', '⚠️ Cảnh báo dung lượng')
+@section('header-title', __('messages.quota_warning'))
 
 @section('content')
-    <div class="greeting">
-        Xin chào {{ $userName }},
+    <div style="font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
+        {{ __('messages.hello') }} {{ $userName }},
     </div>
     
-    <div class="content">
-        <p>Chúng tôi nhận thấy bạn đã sử dụng <strong>{{ $percentage }}%</strong> dung lượng của gói hiện tại.</p>
+    <div style="font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px;">
+        <p style="margin: 10px 0;">{{ __('messages.quota_warning_message', ['percentage' => $percentage]) }}</p>
     </div>
     
-    <div class="warning-box">
-        <p><strong>⚠️ Lưu ý:</strong> Khi đạt 100% dung lượng, bạn sẽ không thể tải lên thêm file mới.</p>
+    <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0; color: #92400e;"><strong>{{ __('messages.warning') }}:</strong> {{ __('messages.quota_warning_limit_reached') }}</p>
     </div>
     
-    <div class="stats-box">
-        <div class="label">Dung lượng đã sử dụng</div>
-        <div class="value">{{ $usedQuota }} MB</div>
-        <div class="subtext">trên tổng số {{ $totalQuota }} MB</div>
+    <div style="background-color: #eff6ff; border-left: 4px solid #1e40af; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <div style="font-weight: bold; color: #1f2937; margin-bottom: 8px;">{{ __('messages.quota_used') }}</div>
+        <div style="font-size: 24px; font-weight: bold; color: #1e40af; margin-bottom: 5px;">{{ $percentage }}%</div>
+        <div style="font-size: 12px; color: #6b7280;">{{ $usedQuota }} MB {{ __('messages.of') }} {{ $totalQuota }} MB</div>
         
-        <div class="progress-bar">
-            <div class="progress-fill" style="width: {{ $percentage }}%"></div>
+        <div style="width: 100%; height: 20px; background-color: #e5e7eb; border-radius: 10px; overflow: hidden; margin-top: 10px;">
+            <div style="height: 100%; width: {{ $percentage }}%; background: linear-gradient(90deg, #1e40af 0%, #1e3a8a 100%);"></div>
         </div>
     </div>
     
-    <div class="content">
-        <p><strong>Đề xuất:</strong></p>
-        <ul style="padding-left: 20px; margin-top: 10px;">
-            <li>Xóa các file không cần thiết để giải phóng dung lượng</li>
-            <li>Nâng cấp lên gói cao hơn để có thêm dung lượng</li>
-            <li>Liên hệ hỗ trợ nếu bạn cần tư vấn</li>
+    <div style="font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px;">
+        <p style="margin: 10px 0;"><strong>{{ __('messages.recommendations') }}:</strong></p>
+        <ul style="padding-left: 20px; margin-top: 10px; list-style: none;">
+            <li style="margin-bottom: 8px; padding-left: 20px; position: relative;">
+                <span style="position: absolute; left: 0; color: #1e40af;">▸</span>
+                {{ __('messages.delete_unnecessary_files') }}
+            </li>
+            <li style="margin-bottom: 8px; padding-left: 20px; position: relative;">
+                <span style="position: absolute; left: 0; color: #1e40af;">▸</span>
+                {{ __('messages.upgrade_to_higher_plan') }}
+            </li>
+            <li style="margin-bottom: 8px; padding-left: 20px; position: relative;">
+                <span style="position: absolute; left: 0; color: #1e40af;">▸</span>
+                {{ __('messages.contact_support_for_advice') }}
+            </li>
         </ul>
     </div>
     
-    <div class="button-container">
-        <a href="{{ $upgradeUrl }}" class="button">Nâng cấp ngay</a>
-    </div>
-    
-    <div class="divider"></div>
-    
-    <div class="content" style="font-size: 14px; color: #888888;">
-        <p>Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!</p>
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ $upgradeUrl }}" style="display: inline-block; padding: 12px 30px; background-color: #1e40af; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">{{ __('messages.upgrade_now') }}</a>
     </div>
 @endsection

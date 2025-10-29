@@ -3,10 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
 
 class ArchivalLog extends Model
 {
+    use HasOrganizationScope;
+
     protected $fillable = [
+        'organization_id',
         'data_type',
         'strategy',
         'records_archived',
@@ -25,6 +29,11 @@ class ArchivalLog extends Model
         'records_verified' => 'integer',
         'records_deleted_from_hot' => 'integer',
     ];
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
 
     /**
      * Scope for successful archival operations

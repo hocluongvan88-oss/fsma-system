@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
 
 class TwoFALog extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $table = 'two_fa_logs';
 
@@ -19,6 +20,7 @@ class TwoFALog extends Model
         'user_agent',
         'failure_reason',
         'attempted_at',
+        'organization_id',
     ];
 
     protected function casts(): array
@@ -32,5 +34,10 @@ class TwoFALog extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
     }
 }

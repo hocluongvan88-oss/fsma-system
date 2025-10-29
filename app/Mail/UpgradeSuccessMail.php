@@ -16,41 +16,38 @@ class UpgradeSuccessMail extends Mailable
     public $planName;
     public $newQuota;
     public $dashboardUrl;
+    public $userEmailToken;
 
-    /**
-     * Create a new message instance.
-     */
-    public function __construct($userName, $planName, $newQuota, $dashboardUrl)
+    public function __construct($userName, $planName, $newQuota, $dashboardUrl, $userEmailToken = '')
     {
         $this->userName = $userName;
         $this->planName = $planName;
         $this->newQuota = $newQuota;
         $this->dashboardUrl = $dashboardUrl;
+        $this->userEmailToken = $userEmailToken;
     }
 
-    /**
-     * Get the message envelope.
-     */
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '🎉 Chúc mừng! Nâng cấp gói ' . $this->planName . ' thành công',
+            subject: __('messages.upgrade_successful'),
         );
     }
 
-    /**
-     * Get the message content definition.
-     */
+    public function headers(): array
+    {
+        return [
+            'List-Unsubscribe' => '<' . route('email.unsubscribe', ['token' => $this->userEmailToken]) . '>',
+        ];
+    }
+
     public function content(): Content
     {
         return new Content(
-            view: 'emails.upgrade-success',
+            view: 'email.upgrade-success',
         );
     }
 
-    /**
-     * Get the attachments for the message.
-     */
     public function attachments(): array
     {
         return [];

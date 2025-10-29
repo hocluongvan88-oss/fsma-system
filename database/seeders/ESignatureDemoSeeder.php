@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\TraceRecord;
 use App\Models\CTEEvent;
 use App\Models\Document;
+use App\Models\Organization;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
@@ -15,26 +16,45 @@ class ESignatureDemoSeeder extends Seeder
 {
     public function run(): void
     {
-        // Get or create demo users
-        $manager = User::firstOrCreate(
+        $demoOrganization = Organization::where('name', 'VEXIM Global (Demo)')->first();
+        
+        if (!$demoOrganization) {
+            $this->command->error('Demo organization not found. Please run DatabaseSeeder first.');
+            return;
+        }
+
+        $demoOrganizationId = $demoOrganization->id;
+
+        // Get or create demo users with correct organization_id
+        $manager = User::updateOrCreate(
             ['email' => 'manager@fsma204.com'],
             [
                 'username' => 'manager',
-                'name' => 'John Manager',
-                'password' => Hash::make('password123'),
+                'full_name' => 'Warehouse Manager',
+                'password' => Hash::make('manager123'),
                 'role' => 'manager',
-                'package' => 'enterprise',
+                'package_id' => 'premium',
+                'max_cte_records_monthly' => 2500,
+                'max_documents' => 999999,
+                'max_users' => 3,
+                'is_active' => true,
+                'organization_id' => $demoOrganizationId,
             ]
         );
 
-        $admin = User::firstOrCreate(
+        $admin = User::updateOrCreate(
             ['email' => 'admin@fsma204.com'],
             [
                 'username' => 'admin',
-                'name' => 'Admin User',
-                'password' => Hash::make('password123'),
+                'full_name' => 'System Administrator',
+                'password' => Hash::make('admin123'),
                 'role' => 'admin',
-                'package' => 'enterprise',
+                'package_id' => 'enterprise',
+                'max_cte_records_monthly' => 99999999,
+                'max_documents' => 999999,
+                'max_users' => 999999,
+                'is_active' => true,
+                'organization_id' => 1,
             ]
         );
 

@@ -11,7 +11,9 @@ class ESignatureController extends Controller
 {
     public function index()
     {
+        $currentUser = auth()->user();
         $signatures = ESignature::with(['user'])
+            ->where('organization_id', $currentUser->organization_id)
             ->latest('signed_at')
             ->paginate(50);
 

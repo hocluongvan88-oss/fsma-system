@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Services\CacheService;
+use App\Traits\HasOrganizationScope;
+use Illuminate\Support\Facades\Auth;
 
 class Product extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $fillable = [
         'sku',
@@ -30,6 +32,12 @@ class Product extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function ($product) {
+            if (empty($product->organization_id) && Auth::check() && Auth::user()->organization_id) {
+                $product->organization_id = Auth::user()->organization_id;
+            }
+        });
 
         static::saved(function ($product) {
             CacheService::forgetByTag('products');
@@ -76,7 +84,6 @@ class Product extends Model
         });
     }
 
-    // Relationships
     public function traceRecords()
     {
         return $this->hasMany(TraceRecord::class);
@@ -87,7 +94,6 @@ class Product extends Model
         return $this->belongsTo(Organization::class);
     }
 
-    // Scopes
     public function scopeFtl($query)
     {
         return $query->where('is_ftl', true);
@@ -103,7 +109,6 @@ class Product extends Model
         return $query->where('organization_id', $organizationId);
     }
 
-    // Helper methods
     public function isFoodTraceabilityList(): bool
     {
         return $this->is_ftl;

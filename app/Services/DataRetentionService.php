@@ -6,37 +6,60 @@ use App\Models\RetentionPolicy;
 use App\Models\RetentionLog;
 use App\Models\ErrorLog;
 use App\Models\Notification;
+use App\Models\CTEEvent;
+use App\Models\TraceRecord;
+use App\Models\AuditLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Cache;
 
 class DataRetentionService
 {
-    private const PROTECTED_DATA_TYPES = [
-        'trace_records',      // Core traceability data
-        'cte_events',         // Immutable per FSMA 204
-        'trace_relationships',// Audit trail
-        'audit_logs',         // Compliance requirement
-        'e_signatures',       // Legal requirement (21 CFR Part 11)
+    public const PROTECTED_DATA_TYPES = [
+        'trace_records',
+        'cte_events',
+        'trace_relationships',
+        'audit_logs',
+        'e_signatures',
     ];
 
-    private const DELETABLE_DATA_TYPES = [
+    public const DELETABLE_DATA_TYPES = [
         'error_logs',
         'notifications',
     ];
 
+    public const FSMA_204_MINIMUM_RETENTION_MONTHS = 27;
+    
+    private const RETENTION_STATS_CACHE_KEY = 'retention_stats_org_{org_id}';
+    private const RETENTION_STATS_CACHE_TTL = 3600; // 1 hour
+
     /**
-     * Get all active retention policies
+     * Get organization ID with validation
+     * Throws exception if organization context is missing
+     * FSMA 204 Compliance: Prevents cross-organization data access
      */
+    private function getOrganizationId(): int
+    {
+        $orgId = auth()->user()?->organization_id;
+        
+        if (!$orgId) {
+            throw new \InvalidArgumentException(
+                'Organization context required for retention operations. ' .
+                'User must be authenticated and belong to an organization.'
+            );
+        }
+
+        return $orgId;
+    }
+
     public function getActivePolicies(): array
     {
         return RetentionPolicy::active()->get()->keyBy('data_type')->toArray();
     }
 
-    /**
-     * Create or update retention policy
-     */
     public function createPolicy(array $data): RetentionPolicy
     {
         if (in_array($data['data_type'], self::PROTECTED_DATA_TYPES)) {
@@ -56,9 +79,6 @@ class DataRetentionService
         return RetentionPolicy::create($data);
     }
 
-    /**
-     * Execute retention cleanup for a specific data type
-     */
     public function executeCleanup(string $dataType, bool $dryRun = false): array
     {
         if (in_array($dataType, self::PROTECTED_DATA_TYPES)) {
@@ -112,10 +132,9 @@ class DataRetentionService
                 }
             });
 
-            // Log the retention action
-            if (!$dryRun) {
-                $this->logRetention($policy, $stats);
-            }
+            $this->logRetention($policy, $stats, $dryRun);
+            
+            $this->clearRetentionStatsCache();
 
         } catch (\Exception $e) {
             $stats['status'] = 'failed';
@@ -126,78 +145,105 @@ class DataRetentionService
         return $stats;
     }
 
-    /**
-     * Count records to be deleted
-     */
     private function countRecordsToDelete(string $dataType, Carbon $cutoffDate): int
     {
+        $orgId = $this->getOrganizationId();
+        
         return match($dataType) {
-            'error_logs' => ErrorLog::where('created_at', '<', $cutoffDate)->count(),
-            'notifications' => Notification::where('created_at', '<', $cutoffDate)->count(),
+            'error_logs' => ErrorLog::where('created_at', '<', $cutoffDate)
+                ->where('organization_id', $orgId)
+                ->count(),
+            'notifications' => Notification::where('created_at', '<', $cutoffDate)
+                ->where('organization_id', $orgId)
+                ->count(),
             default => 0,
         };
     }
 
-    /**
-     * Delete old data (only non-critical data)
-     */
     private function deleteOldData(string $dataType, Carbon $cutoffDate): int
     {
+        $orgId = $this->getOrganizationId();
+        
         return match($dataType) {
-            'error_logs' => $this->deleteInChunks(ErrorLog::class, $cutoffDate),
-            'notifications' => $this->deleteInChunks(Notification::class, $cutoffDate),
+            'error_logs' => $this->deleteInChunks(ErrorLog::class, $cutoffDate, organizationId: $orgId),
+            'notifications' => $this->deleteInChunks(Notification::class, $cutoffDate, organizationId: $orgId),
             default => 0,
         };
     }
 
-    /**
-     * Delete records in chunks to prevent performance issues
-     */
-    private function deleteInChunks(string $modelClass, Carbon $cutoffDate, int $chunkSize = 1000): int
+    private function deleteInChunks(string $modelClass, Carbon $cutoffDate, int $chunkSize = 1000, ?int $organizationId = null): int
     {
         $totalDeleted = 0;
         
         do {
-            $deleted = $modelClass::where('created_at', '<', $cutoffDate)
-                ->limit($chunkSize)
-                ->delete();
+            $query = $modelClass::where('created_at', '<', $cutoffDate);
+            
+            if ($organizationId) {
+                $query->where('organization_id', $organizationId);
+            }
+            
+            $deleted = $query->limit($chunkSize)->delete();
             
             $totalDeleted += $deleted;
             
-            // Small delay to prevent database overload
             if ($deleted > 0) {
-                usleep(100000); // 100ms
+                usleep(100000);
             }
         } while ($deleted > 0);
         
         return $totalDeleted;
     }
 
-    /**
-     * Backup data before deletion
-     */
     private function backupData(string $dataType, Carbon $cutoffDate): string
     {
         $timestamp = now()->format('Y-m-d_H-i-s');
         $filename = "retention_backup_{$dataType}_{$timestamp}.json";
         $path = "backups/retention/{$filename}";
 
+        $orgId = $this->getOrganizationId();
+        
         $data = match($dataType) {
-            'error_logs' => ErrorLog::where('created_at', '<', $cutoffDate)->get(),
-            'notifications' => Notification::where('created_at', '<', $cutoffDate)->get(),
+            'error_logs' => ErrorLog::where('created_at', '<', $cutoffDate)
+                ->where('organization_id', $orgId)
+                ->get(),
+            'notifications' => Notification::where('created_at', '<', $cutoffDate)
+                ->where('organization_id', $orgId)
+                ->get(),
             default => [],
         };
 
-        Storage::disk('local')->put($path, json_encode($data, JSON_PRETTY_PRINT));
-        return $path;
+        try {
+            $jsonData = json_encode($data, JSON_PRETTY_PRINT);
+            $encryptedData = Crypt::encryptString($jsonData);
+            
+            Storage::disk('local')->put($path, $encryptedData);
+            
+            // Verify file exists and has content
+            if (!Storage::disk('local')->exists($path) || Storage::disk('local')->size($path) === 0) {
+                throw new \Exception("Backup file is empty or failed to write");
+            }
+            
+            Log::info("Data retention backup created", [
+                'data_type' => $dataType,
+                'backup_path' => $path,
+                'organization_id' => $orgId,
+                'record_count' => count($data),
+                'created_by' => auth()->user()?->email,
+            ]);
+            
+            return $path;
+        } catch (\Exception $e) {
+            Log::error("Backup failed for {$dataType}: " . $e->getMessage());
+            throw $e;
+        }
     }
 
-    /**
-     * Log retention action
-     */
-    private function logRetention(RetentionPolicy $policy, array $stats): void
+    private function logRetention(RetentionPolicy $policy, array $stats, bool $isDryRun = false): void
     {
+        $orgId = $this->getOrganizationId();
+        
         RetentionLog::create([
+            'organization_id' => $orgId,
             'retention_policy_id' => $policy->id,
             'data_type' => $policy->data_type,
             'records_deleted' => $stats['records_deleted'],
@@ -205,15 +251,22 @@ class DataRetentionService
             'backup_file_path' => $stats['backup_file_path'],
             'executed_at' => now(),
             'executed_by' => auth()->user()?->email ?? 'system',
-            'status' => $stats['status'],
+            'status' => $isDryRun ? 'dry_run' : $stats['status'],
             'error_message' => $stats['error_message'],
         ]);
     }
 
-    /**
-     * Get retention statistics
-     */
     public function getRetentionStats(): array
+    {
+        $orgId = $this->getOrganizationId();
+        $cacheKey = str_replace('{org_id}', $orgId, self::RETENTION_STATS_CACHE_KEY);
+
+        return Cache::remember($cacheKey, self::RETENTION_STATS_CACHE_TTL, function () {
+            return $this->calculateRetentionStats();
+        });
+    }
+
+    private function calculateRetentionStats(): array
     {
         $policies = RetentionPolicy::active()->get();
         $stats = [];
@@ -239,10 +292,17 @@ class DataRetentionService
         return $stats;
     }
 
-    /**
-     * Archive old CTE data (move to cold storage, not delete)
-     * This is for performance optimization while maintaining compliance
-     */
+    private function clearRetentionStatsCache(): void
+    {
+        try {
+            $orgId = $this->getOrganizationId();
+            $cacheKey = str_replace('{org_id}', $orgId, self::RETENTION_STATS_CACHE_KEY);
+            Cache::forget($cacheKey);
+        } catch (\Exception $e) {
+            Log::warning("Failed to clear retention stats cache: " . $e->getMessage());
+        }
+    }
+
     public function archiveOldData(string $dataType, int $monthsOld = 36): array
     {
         if (!in_array($dataType, ['cte_events', 'trace_records'])) {
@@ -252,18 +312,89 @@ class DataRetentionService
             ];
         }
 
-        // TODO: Implement archival to separate tables or cold storage
-        // This maintains data accessibility while improving query performance
-        
-        return [
-            'status' => 'not_implemented',
-            'reason' => 'Archival feature coming soon',
+        $orgId = $this->getOrganizationId();
+        $cutoffDate = now()->subMonths($monthsOld);
+        $archiveStats = [
+            'status' => 'success',
+            'data_type' => $dataType,
+            'records_archived' => 0,
+            'archive_path' => null,
+            'error_message' => null,
         ];
+
+        try {
+            DB::transaction(function () use ($dataType, $cutoffDate, $orgId, &$archiveStats) {
+                // Get records to archive
+                $query = match($dataType) {
+                    'cte_events' => CTEEvent::where('created_at', '<', $cutoffDate)
+                        ->where('organization_id', $orgId),
+                    'trace_records' => TraceRecord::where('created_at', '<', $cutoffDate)
+                        ->where('organization_id', $orgId),
+                    default => null,
+                };
+
+                if (!$query) {
+                    throw new \Exception("Invalid data type for archival: {$dataType}");
+                }
+
+                $records = $query->get();
+                $archiveStats['records_archived'] = $records->count();
+
+                if ($records->count() === 0) {
+                    $archiveStats['status'] = 'skipped';
+                    $archiveStats['reason'] = 'No records found matching archival criteria';
+                    return;
+                }
+
+                // Create encrypted archive
+                $timestamp = now()->format('Y-m-d_H-i-s');
+                $filename = "archive_{$dataType}_{$timestamp}.json";
+                $path = "archives/{$dataType}/{$filename}";
+
+                $jsonData = json_encode($records, JSON_PRETTY_PRINT);
+                $encryptedData = Crypt::encryptString($jsonData);
+
+                Storage::disk('local')->put($path, $encryptedData);
+
+                // Verify archive
+                if (!Storage::disk('local')->exists($path) || Storage::disk('local')->size($path) === 0) {
+                    throw new \Exception("Archive file is empty or failed to write");
+                }
+
+                $archiveStats['archive_path'] = $path;
+
+                // Log archival operation
+                Log::info("Data archival completed", [
+                    'data_type' => $dataType,
+                    'archive_path' => $path,
+                    'organization_id' => $orgId,
+                    'record_count' => $records->count(),
+                    'archived_by' => auth()->user()?->email,
+                ]);
+
+                // Log to AuditLog
+                AuditLog::createLog([
+                    'user_id' => auth()->user()?->id,
+                    'action' => 'archive_data',
+                    'table_name' => $dataType,
+                    'organization_id' => $orgId,
+                    'new_values' => [
+                        'archive_path' => $path,
+                        'record_count' => $records->count(),
+                        'months_old' => $monthsOld,
+                    ],
+                ]);
+            });
+
+        } catch (\Exception $e) {
+            $archiveStats['status'] = 'failed';
+            $archiveStats['error_message'] = $e->getMessage();
+            Log::error("Data archival failed for {$dataType}: " . $e->getMessage());
+        }
+
+        return $archiveStats;
     }
 
-    /**
-     * Validate that critical data is not being deleted
-     */
     public function validateRetentionPolicy(string $dataType, int $retentionMonths): array
     {
         $errors = [];
@@ -272,8 +403,9 @@ class DataRetentionService
             $errors[] = "Data type '{$dataType}' is protected by FSMA 204 and cannot have a deletion policy.";
         }
 
-        if ($retentionMonths > 0 && $retentionMonths < 24) {
-            $errors[] = "Retention period must be at least 24 months for FDA compliance (recommended: indefinite).";
+        if ($retentionMonths > 0 && $retentionMonths < self::FSMA_204_MINIMUM_RETENTION_MONTHS) {
+            $errors[] = "Retention period must be at least " . self::FSMA_204_MINIMUM_RETENTION_MONTHS . 
+                        " months per FSMA 204 Section 204.6 requirements (recommended: indefinite retention).";
         }
 
         return [

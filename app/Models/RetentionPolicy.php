@@ -2,15 +2,17 @@
 
 namespace App\Models;
 
+use App\Traits\HasOrganizationScope;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class RetentionPolicy extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasOrganizationScope;
 
     protected $fillable = [
+        'organization_id',
         'policy_name',
         'data_type',
         'retention_months',
@@ -48,15 +50,17 @@ class RetentionPolicy extends Model
     {
         return [
             // FSMA 204 Protected Data - NEVER delete (0 = indefinite retention)
-            'trace_records' => 0,      // Core traceability data
-            'cte_events' => 0,         // Immutable per FSMA 204
-            'trace_relationships' => 0,// Audit trail
-            'audit_logs' => 0,         // Compliance requirement
-            'e_signatures' => 0,       // Legal requirement (21 CFR Part 11)
+            'trace_records' => 0,
+            'cte_events' => 0,
+            'trace_relationships' => 0,
+            'audit_logs' => 0,
+            'e_signatures' => 0,
+            'documents' => 0,
+            'document_versions' => 0,
             
             // Non-critical operational data - Can be deleted
-            'error_logs' => 6,         // 6 months
-            'notifications' => 3,      // 3 months
+            'error_logs' => 6,
+            'notifications' => 3,
         ];
     }
 
@@ -68,6 +72,8 @@ class RetentionPolicy extends Model
             'trace_relationships',
             'audit_logs',
             'e_signatures',
+            'documents',
+            'document_versions',
         ];
         
         return in_array($dataType, $protectedTypes);
@@ -81,6 +87,8 @@ class RetentionPolicy extends Model
             'trace_relationships' => 'Audit trail required for traceability chain integrity',
             'audit_logs' => 'Compliance and regulatory audit requirement',
             'e_signatures' => 'Legal requirement per 21 CFR Part 11 (Electronic Records)',
+            'documents' => 'Business critical documents must be retained indefinitely',
+            'document_versions' => 'Document version history required for compliance',
         ];
         
         return $reasons[$dataType] ?? null;

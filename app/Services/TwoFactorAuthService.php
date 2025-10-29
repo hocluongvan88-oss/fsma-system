@@ -48,7 +48,7 @@ class TwoFactorAuthService
         }
 
         // Generate backup codes
-        $backupCodes = $this->generateBackupCodes();
+        $backupCodes = $this->generateBackupCodes($user);
 
         // Update user
         $user->update([
@@ -98,12 +98,17 @@ class TwoFactorAuthService
     /**
      * Generate backup codes
      */
-    public function generateBackupCodes(int $count = 10): array
+    public function generateBackupCodes(User $user = null, int $count = 10): array
     {
         $codes = [];
         for ($i = 0; $i < $count; $i++) {
-            $codes[] = Str::random(8);
+            $codes[] = strtoupper(Str::random(8));
         }
+        
+        if ($user) {
+            $user->update(['backup_codes' => json_encode($codes)]);
+        }
+        
         return $codes;
     }
 

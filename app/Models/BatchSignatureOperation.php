@@ -4,10 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Traits\HasOrganizationScope;
 
 class BatchSignatureOperation extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $table = 'batch_signature_operations';
 

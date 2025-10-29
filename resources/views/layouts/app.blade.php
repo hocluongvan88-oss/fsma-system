@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="{{ app()->getLocale() }}">
+<html lang="{{ app()->getLocale() }}" id="htmlRoot">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <!-- Added locale meta tag for proper language detection -->
-    <meta name="locale" content="{{ app()->getLocale() }}">
+    <meta name="locale" content="{{ app()->getLocale() }}" id="localeMeta">
     @if(config('locales.available_locales'))
     <meta name="available-locales" content="{{ implode(',', array_keys(config('locales.available_locales'))) }}">
     @endif
@@ -515,18 +515,28 @@
         }
     </style>
     
-    <!-- Added JavaScript localization support -->
+    <!-- Added improved JavaScript localization support with event handling -->
     <script>
         window.AppLocale = {
             current: '{{ app()->getLocale() }}',
             available: @json(config('locales.available_locales') ?? []),
             translations: {},
             
-            loadTranslations: function() {
-                fetch(`/api/translations/${this.current}`)
+            loadTranslations: function(locale = null) {
+                const targetLocale = locale || this.current;
+                const timestamp = Date.now();
+                
+                return fetch(`/api/translations/${targetLocale}?_t=${timestamp}`)
                     .then(response => response.json())
                     .then(data => {
-                        this.translations = data;
+                        this.translations = data.translations || data;
+                        this.current = targetLocale;
+                        
+                        window.dispatchEvent(new CustomEvent('localeChanged', {
+                            detail: { locale: targetLocale, translations: this.translations }
+                        }));
+                        
+                        console.log('[v0] Translations loaded for locale:', targetLocale);
                     })
                     .catch(error => {
                         console.error('[v0] Failed to load translations:', error);
@@ -581,10 +591,18 @@
         
         document.addEventListener('DOMContentLoaded', function() {
             window.AppLocale.loadTranslations();
+            
+            window.addEventListener('localeChanged', function(event) {
+                console.log('[v0] Locale changed event received:', event.detail.locale);
+                
+                document.getElementById('htmlRoot').lang = event.detail.locale;
+                document.getElementById('localeMeta').content = event.detail.locale;
+            });
         });
     </script>
     
     @stack('styles')
+    <link rel="stylesheet" href="{{ asset('css/documents.css') }}">
 </head>
 <body>
     @include('components.blocking-modal')
@@ -658,6 +676,7 @@
                 
                 <div class="nav-section">
                     <div class="nav-section-title">{{ __('messages.cte_events') }}</div>
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin() || auth()->user()->hasFeature('traceability'))
                     <a href="{{ route('cte.receiving') }}" class="nav-link {{ request()->routeIs('cte.receiving') ? 'active' : '' }}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.75rem;">
                             <path d="M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"></path>
@@ -687,6 +706,28 @@
                         </svg>
                         {{ __('messages.shipping') }}
                     </a>
+                    @else
+                    <div style="padding: 0.75rem 1rem; color: var(--text-muted); font-size: 0.875rem;">
+                        {{ __('messages.feature_locked_upgrade') }}
+                    </div>
+                    @endif
+                </div>
+                
+                <div class="nav-section">
+                    <div class="nav-section-title">{{ __('messages.documents') }}</div>
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin() || auth()->user()->hasFeature('document_management'))
+                    <a href="{{ route('documents.index') }}" class="nav-link {{ request()->routeIs('documents.*') ? 'active' : '' }}">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.75rem;">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                        </svg>
+                        {{ __('messages.documents') }}
+                    </a>
+                    @else
+                    <div style="padding: 0.75rem 1rem; color: var(--text-muted); font-size: 0.875rem;">
+                        {{ __('messages.feature_locked_upgrade') }}
+                    </div>
+                    @endif
                 </div>
                 
                 <div class="nav-section">
@@ -710,11 +751,11 @@
                     </a>
                 </div>
                 
-                @if(auth()->user()->isManager())
+                @if(auth()->user()->isSystemAdmin() || auth()->user()->isManager())
                 <div class="nav-section">
-                    <div class="nav-section-title">{{ auth()->user()->isAdmin() ? __('messages.admin') : __('messages.management') }}</div>
+                    <div class="nav-section-title">{{ auth()->user()->isSystemAdmin() || auth()->user()->isAdmin() ? __('messages.admin') : __('messages.management') }}</div>
                     
-                    @if(auth()->user()->isAdmin())
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin())
                     <a href="{{ route('admin.packages.index') }}" class="nav-link {{ request()->routeIs('admin.packages.*') ? 'active' : '' }}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.75rem;">
                             <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
@@ -736,7 +777,8 @@
                         {{ __('messages.user_management') }}
                     </a>
                     
-                    @if(auth()->user()->isAdmin())
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin())
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin() || auth()->user()->hasFeature('data_retention'))
                     <a href="{{ route('admin.retention.index') }}" class="nav-link {{ request()->routeIs('admin.retention.*') ? 'active' : '' }}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.75rem;">
                             <polyline points="3 6 5 6 21 6"></polyline>
@@ -746,7 +788,9 @@
                         </svg>
                         {{ __('messages.data_retention') }}
                     </a>
-                    <!-- Added Archival menu item -->
+                    @endif
+                    
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin() || auth()->user()->hasFeature('archival'))
                     <a href="{{ route('admin.archival.index') }}" class="nav-link {{ request()->routeIs('admin.archival.*') ? 'active' : '' }}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.75rem;">
                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
@@ -758,13 +802,18 @@
                         </svg>
                         {{ __('messages.archival') }}
                     </a>
-                    <!-- Added E-Signature menu item -->
+                    @endif
+                    
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin() || auth()->user()->hasFeature('e_signatures'))
                     <a href="{{ route('admin.e-signatures.index') }}" class="nav-link {{ request()->routeIs('admin.e-signatures.*') ? 'active' : '' }}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.75rem;">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
                         </svg>
                         {{ __('messages.e_signatures') }}
                     </a>
+                    @endif
+                    
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin() || auth()->user()->hasFeature('certificates'))
                     <a href="{{ route('certificates.index') }}" class="nav-link {{ request()->routeIs('certificates.*') ? 'active' : '' }}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.75rem;">
                             <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -772,6 +821,9 @@
                         </svg>
                         {{ __('messages.certificates') }}
                     </a>
+                    @endif
+                    
+                    @if(auth()->user()->isSystemAdmin() || auth()->user()->isAdmin() || auth()->user()->hasFeature('compliance_report'))
                     <a href="{{ route('admin.compliance') }}" class="nav-link {{ request()->routeIs('admin.compliance') ? 'active' : '' }}">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 0.75rem;">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -780,6 +832,7 @@
                         </svg>
                         {{ __('messages.compliance_report') }}
                     </a>
+                    @endif
                     @endif
                 </div>
                 @endif
@@ -796,10 +849,13 @@
                     
                     @include('components.notification-bell')
                     
-                    <span style="color: var(--text-secondary);">{{ auth()->user()->full_name }}</span>
+                    <span style="color: var(--text-secondary);">
+                        {{ auth()->user()->organization->name ?? auth()->user()->full_name }}
+                    </span>
                     <form action="{{ route('logout') }}" method="POST" style="display: inline;">
                         @csrf
-                        <button type="submit" class="btn btn-secondary">Logout</button>
+                        <!-- Added translation for Logout button -->
+                        <button type="submit" class="btn btn-secondary">{{ __('messages.logout') }}</button>
                     </form>
                 </div>
             </div>
@@ -847,5 +903,6 @@
     </script>
     
     @stack('scripts')
+    <script src="{{ asset('js/documents.js') }}" defer></script>
 </body>
 </html>

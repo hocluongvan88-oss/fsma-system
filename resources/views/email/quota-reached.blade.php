@@ -1,48 +1,49 @@
-@extends('emails.layout')
+@extends('email.layout')
 
-@section('title', 'Đã hết dung lượng')
-
-@section('header-title', '🚨 Đã hết dung lượng')
+@section('header-title', __('messages.quota_reached'))
 
 @section('content')
-    <div class="greeting">
-        Xin chào {{ $userName }},
+    <div style="font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
+        {{ __('messages.hello') }} {{ $userName }},
     </div>
     
-    <div class="content">
-        <p>Tài khoản của bạn đã sử dụng hết <strong>100%</strong> dung lượng được cấp.</p>
+    <div style="font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px;">
+        <p style="margin: 10px 0;">{{ __('messages.quota_reached_message') }}</p>
     </div>
     
-    <div class="danger-box">
-        <p><strong>🚨 Cảnh báo:</strong> Bạn không thể tải lên file mới cho đến khi giải phóng dung lượng hoặc nâng cấp gói.</p>
+    <div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0; color: #7f1d1d;"><strong>{{ __('messages.critical') }}:</strong> {{ __('messages.quota_reached_cannot_upload') }}</p>
     </div>
     
-    <div class="stats-box">
-        <div class="label">Dung lượng hiện tại</div>
-        <div class="value" style="color: #dc3545;">{{ $usedQuota }} MB</div>
-        <div class="subtext">đã đạt giới hạn {{ $totalQuota }} MB</div>
+    <div style="background-color: #eff6ff; border-left: 4px solid #1e40af; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <div style="font-weight: bold; color: #1f2937; margin-bottom: 8px;">{{ __('messages.current_usage') }}</div>
+        <div style="font-size: 24px; font-weight: bold; color: #dc2626; margin-bottom: 5px;">{{ $usedQuota }} MB</div>
+        <div style="font-size: 12px; color: #6b7280;">{{ __('messages.reached_limit') }} {{ $totalQuota }} MB</div>
         
-        <div class="progress-bar">
-            <div class="progress-fill" style="width: 100%; background: linear-gradient(90deg, #dc3545 0%, #c82333 100%);"></div>
+        <div style="width: 100%; height: 20px; background-color: #e5e7eb; border-radius: 10px; overflow: hidden; margin-top: 10px;">
+            <div style="height: 100%; width: 100%; background: linear-gradient(90deg, #dc2626 0%, #b91c1c 100%);"></div>
         </div>
     </div>
     
-    <div class="content">
-        <p><strong>Bạn có thể:</strong></p>
-        <ul style="padding-left: 20px; margin-top: 10px;">
-            <li><strong>Xóa file cũ:</strong> Giải phóng dung lượng bằng cách xóa các file không cần thiết</li>
-            <li><strong>Nâng cấp gói:</strong> Nhận thêm dung lượng và nhiều tính năng cao cấp</li>
-            <li><strong>Liên hệ hỗ trợ:</strong> Chúng tôi sẵn sàng tư vấn giải pháp phù hợp</li>
+    <div style="font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px;">
+        <p style="margin: 10px 0;"><strong>{{ __('messages.you_can') }}:</strong></p>
+        <ul style="padding-left: 20px; margin-top: 10px; list-style: none;">
+            <li style="margin-bottom: 8px; padding-left: 20px; position: relative;">
+                <span style="position: absolute; left: 0; color: #1e40af;">▸</span>
+                {{ __('messages.delete_old_files') }}
+            </li>
+            <li style="margin-bottom: 8px; padding-left: 20px; position: relative;">
+                <span style="position: absolute; left: 0; color: #1e40af;">▸</span>
+                {{ __('messages.upgrade_package') }}
+            </li>
+            <li style="margin-bottom: 8px; padding-left: 20px; position: relative;">
+                <span style="position: absolute; left: 0; color: #1e40af;">▸</span>
+                {{ __('messages.contact_support') }}
+            </li>
         </ul>
     </div>
     
-    <div class="button-container">
-        <a href="{{ $upgradeUrl }}" class="button">Nâng cấp ngay để tiếp tục</a>
-    </div>
-    
-    <div class="divider"></div>
-    
-    <div class="content" style="font-size: 14px; color: #888888;">
-        <p>Nếu bạn nghĩ đây là lỗi, vui lòng liên hệ bộ phận hỗ trợ.</p>
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ $upgradeUrl }}" style="display: inline-block; padding: 12px 30px; background-color: #1e40af; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">{{ __('messages.upgrade_now') }}</a>
     </div>
 @endsection

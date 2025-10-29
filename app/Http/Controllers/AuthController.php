@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Session;
 use App\Models\User;
 
 class AuthController extends BaseController
@@ -22,17 +22,6 @@ class AuthController extends BaseController
 
     public function login(Request $request)
     {
-        $key = 'login.' . $request->ip();
-        
-        if (RateLimiter::tooManyAttempts($key, 5)) {
-            $seconds = RateLimiter::availableIn($key);
-            $minutes = ceil($seconds / 60);
-            
-            return back()->withErrors([
-                'email' => __('messages.too_many_login_attempts', ['minutes' => $minutes]),
-            ])->onlyInput('email');
-        }
-
         $credentials = $this->validateWithLocale($request, [
             'email' => 'required|email',
             'password' => 'required',
@@ -46,8 +35,6 @@ class AuthController extends BaseController
                     'email' => $credentials['email'],
                 ]);
             }
-            
-            RateLimiter::hit($key, 300); // Lock for 5 minutes after 5 attempts
             
             return back()->withErrors([
                 'email' => 'Invalid email or password.',
@@ -65,8 +52,6 @@ class AuthController extends BaseController
         }
         
         if (!$passwordCheck) {
-            RateLimiter::hit($key, 300);
-            
             return back()->withErrors([
                 'email' => 'Invalid email or password.',
             ])->onlyInput('email');
@@ -77,8 +62,6 @@ class AuthController extends BaseController
             
             // Update last login
             Auth::user()->update(['last_login' => now()]);
-            
-            RateLimiter::clear($key);
             
             if (config('app.debug')) {
                 Log::info('[AUTH] Login successful', ['email' => $credentials['email']]);
@@ -92,8 +75,6 @@ class AuthController extends BaseController
                 'email' => $credentials['email']
             ]);
         }
-        
-        RateLimiter::hit($key, 300);
 
         return back()->withErrors([
             'email' => 'Invalid email or password.',
@@ -102,9 +83,13 @@ class AuthController extends BaseController
 
     public function logout(Request $request)
     {
+        $locale = Session::get('locale') ?? app()->getLocale();
+        
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        
+        Session::put('locale', $locale);
 
         return redirect()->route('login');
     }

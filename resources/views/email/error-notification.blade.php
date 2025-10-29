@@ -1,83 +1,57 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background-color: #dc2626; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
-        .content { background-color: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; }
-        .footer { background-color: #f3f4f6; padding: 15px; border-radius: 0 0 5px 5px; text-align: center; font-size: 12px; }
-        .error-box { background-color: white; padding: 15px; margin: 15px 0; border-left: 4px solid #dc2626; }
-        .label { font-weight: bold; color: #666; }
-        .value { color: #333; word-break: break-all; }
-        .button { display: inline-block; padding: 10px 20px; background-color: #2563eb; color: white; text-decoration: none; border-radius: 5px; margin-top: 15px; }
-        .severity-critical { color: #dc2626; }
-        .severity-error { color: #ea580c; }
-        .severity-warning { color: #ca8a04; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>{{ __('messages.critical_error_alert_icon') }}</h1>
-            <p>{{ __('messages.error_detected_in_system') }}</p>
-        </div>
+@extends('email.layout')
 
-        <div class="content">
-            <div class="error-box">
-                <p><span class="label">{{ __('messages.error_type') }}:</span></p>
-                <p class="value">{{ $errorLog->error_type }}</p>
-            </div>
+@section('header-title', __('messages.critical_error_alert'))
 
-            <div class="error-box">
-                <p><span class="label">{{ __('messages.message') }}:</span></p>
-                <p class="value">{{ $errorLog->error_message }}</p>
-            </div>
-
-            <div class="error-box">
-                <p><span class="label">{{ __('messages.severity') }}:</span></p>
-                <p class="value severity-{{ $errorLog->severity }}">{{ strtoupper($errorLog->severity) }}</p>
-            </div>
-
-            <div class="error-box">
-                <p><span class="label">{{ __('messages.file') }}:</span></p>
-                <p class="value">{{ $errorLog->file_path }}:{{ $errorLog->line_number }}</p>
-            </div>
-
-            <div class="error-box">
-                <p><span class="label">{{ __('messages.url') }}:</span></p>
-                <p class="value">{{ $errorLog->url }}</p>
-            </div>
-
-            <div class="error-box">
-                <p><span class="label">{{ __('messages.user') }}:</span></p>
-                <p class="value">{{ $errorLog->user?->email ?? __('messages.anonymous') }}</p>
-            </div>
-
-            <div class="error-box">
-                <p><span class="label">{{ __('messages.ip_address') }}:</span></p>
-                <p class="value">{{ $errorLog->ip_address }}</p>
-            </div>
-
-            <div class="error-box">
-                <p><span class="label">{{ __('messages.occurred_at') }}:</span></p>
-                <p class="value">{{ $errorLog->created_at->format('M d, Y H:i:s') }}</p>
-            </div>
-
-            <p style="margin-top: 20px;">
-                <a href="{{ $dashboardUrl }}" class="button">{{ __('messages.view_error_details') }}</a>
-            </p>
-
-            <p style="margin-top: 20px; font-size: 12px; color: #666;">
-                {{ __('messages.automated_error_notification_do_not_reply') }}
-            </p>
-        </div>
-
-        <div class="footer">
-            <p>{{ __('messages.fsma_204_error_tracking') }}</p>
-            <p>{{ __('messages.error_id') }}: {{ $errorLog->id }}</p>
-        </div>
+@section('content')
+    <div style="font-size: 16px; font-weight: bold; margin-bottom: 15px; color: #1f2937;">
+        {{ __('messages.hello') }} {{ __('messages.admin') }},
     </div>
-</body>
-</html>
+    
+    <div style="font-size: 14px; line-height: 1.6; color: #4b5563; margin-bottom: 20px;">
+        <p style="margin: 10px 0;">{{ __('messages.error_detected_in_system') }}</p>
+    </div>
+
+    <div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0;"><span style="font-weight: bold; color: #7f1d1d;">{{ __('messages.error_type') }}:</span></p>
+        <p style="margin: 8px 0; color: #1f2937; word-break: break-all; font-family: 'Courier New', monospace; font-size: 12px;">{{ $errorLog->error_type }}</p>
+    </div>
+
+    <div style="background-color: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0;"><span style="font-weight: bold; color: #7f1d1d;">{{ __('messages.message') }}:</span></p>
+        <p style="margin: 8px 0; color: #1f2937; word-break: break-all;">{{ $errorLog->error_message }}</p>
+    </div>
+
+    <div style="background-color: #eff6ff; border-left: 4px solid #1e40af; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0;"><span style="font-weight: bold; color: #1f2937;">{{ __('messages.severity') }}:</span></p>
+        <p style="margin: 8px 0; color: #1f2937;"><span style="display: inline-block; padding: 4px 8px; background-color: #dc2626; color: #ffffff; border-radius: 3px; font-size: 12px; font-weight: bold;">{{ strtoupper($errorLog->severity) }}</span></p>
+    </div>
+
+    <div style="background-color: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0;"><span style="font-weight: bold; color: #1f2937;">{{ __('messages.file') }}:</span></p>
+        <p style="margin: 8px 0; color: #4b5563; word-break: break-all; font-family: 'Courier New', monospace; font-size: 12px;">{{ $errorLog->file_path }}:{{ $errorLog->line_number }}</p>
+    </div>
+
+    <div style="background-color: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0;"><span style="font-weight: bold; color: #1f2937;">{{ __('messages.url') }}:</span></p>
+        <p style="margin: 8px 0; color: #4b5563; word-break: break-all; font-family: 'Courier New', monospace; font-size: 12px;">{{ $errorLog->url }}</p>
+    </div>
+
+    <div style="background-color: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0;"><span style="font-weight: bold; color: #1f2937;">{{ __('messages.user') }}:</span></p>
+        <p style="margin: 8px 0; color: #4b5563;">{{ $errorLog->user?->email ?? __('messages.anonymous') }}</p>
+    </div>
+
+    <div style="background-color: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0;"><span style="font-weight: bold; color: #1f2937;">{{ __('messages.ip_address') }}:</span></p>
+        <p style="margin: 8px 0; color: #4b5563;">{{ $errorLog->ip_address }}</p>
+    </div>
+
+    <div style="background-color: #f3f4f6; border-left: 4px solid #6b7280; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 8px 0;"><span style="font-weight: bold; color: #1f2937;">{{ __('messages.occurred_at') }}:</span></p>
+        <p style="margin: 8px 0; color: #4b5563;">{{ $errorLog->created_at->format('M d, Y H:i:s') }}</p>
+    </div>
+
+    <div style="text-align: center; margin: 30px 0;">
+        <a href="{{ $dashboardUrl }}" style="display: inline-block; padding: 12px 30px; background-color: #1e40af; color: #ffffff; text-decoration: none; border-radius: 4px; font-weight: bold; font-size: 14px;">{{ __('messages.view_error_details') }}</a>
+    </div>
+@endsection

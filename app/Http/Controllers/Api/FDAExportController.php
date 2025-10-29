@@ -33,7 +33,8 @@ class FDAExportController extends Controller
         $startDate = $validated['start_date'] ? Carbon::parse($validated['start_date']) : null;
         $endDate = $validated['end_date'] ? Carbon::parse($validated['end_date']) : null;
 
-        $content = $this->fdaExportService->exportAllEvents($startDate, $endDate, $format);
+        $currentUser = auth()->user();
+        $content = $this->fdaExportService->exportAllEvents($startDate, $endDate, $format, $currentUser->organization_id);
 
         return $this->downloadResponse($content, $format, 'fda_export_all');
     }
@@ -54,7 +55,8 @@ class FDAExportController extends Controller
         $startDate = $validated['start_date'] ? Carbon::parse($validated['start_date']) : null;
         $endDate = $validated['end_date'] ? Carbon::parse($validated['end_date']) : null;
 
-        $content = $this->fdaExportService->exportByProduct($productId, $startDate, $endDate, $format);
+        $currentUser = auth()->user();
+        $content = $this->fdaExportService->exportByProduct($productId, $startDate, $endDate, $format, $currentUser->organization_id);
 
         return $this->downloadResponse($content, $format, "fda_export_product_{$productId}");
     }
@@ -71,7 +73,8 @@ class FDAExportController extends Controller
 
         $format = $validated['format'] ?? 'json';
 
-        $content = $this->fdaExportService->exportByTLC($tlc, $format);
+        $currentUser = auth()->user();
+        $content = $this->fdaExportService->exportByTLC($tlc, $format, $currentUser->organization_id);
 
         return $this->downloadResponse($content, $format, "fda_export_tlc_{$tlc}");
     }
@@ -82,7 +85,8 @@ class FDAExportController extends Controller
      */
     public function validateCompliance()
     {
-        $results = $this->fdaExportService->validateAllEventsCompliance();
+        $currentUser = auth()->user();
+        $results = $this->fdaExportService->validateAllEventsCompliance($currentUser->organization_id);
 
         return response()->json([
             'success' => true,
@@ -97,8 +101,10 @@ class FDAExportController extends Controller
      */
     public function complianceStatus()
     {
-        $totalEvents = \App\Models\CTEEvent::count();
-        $compliantEvents = \App\Models\CTEEvent::where('fda_compliant', true)->count();
+        $currentUser = auth()->user();
+        $totalEvents = \App\Models\CTEEvent::where('organization_id', $currentUser->organization_id)->count();
+        $compliantEvents = \App\Models\CTEEvent::where('organization_id', $currentUser->organization_id)
+            ->where('fda_compliant', true)->count();
         $nonCompliantEvents = $totalEvents - $compliantEvents;
 
         return response()->json([

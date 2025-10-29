@@ -42,18 +42,19 @@ class TraceabilityController extends Controller
         $validationError = $this->validateTLC($tlc);
         if ($validationError) return $validationError;
 
-        // Log the lookup request
         Log::channel('traceability')->info('API Trace Lookup', [
             'tlc' => $tlc,
-            'ip' => request()->ip(),
-            'user_id' => auth()->id(),
+            'ip_hash' => hash('sha256', request()->ip()),
+            'user_hash' => hash('sha256', (string)auth()->id()),
             'timestamp' => now()
         ]);
 
-        // Cache for 5 minutes
-        $cacheKey = "trace_lookup_{$tlc}";
-        $record = Cache::remember($cacheKey, 300, function() use ($tlc) {
+        $user = auth()->user();
+        $cacheKey = "trace_lookup_{$tlc}_org_{$user->organization_id}";
+        
+        $record = Cache::remember($cacheKey, 300, function() use ($tlc, $user) {
             return TraceRecord::where('tlc', $tlc)
+                ->where('organization_id', $user->organization_id)
                 ->with(['product', 'location', 'cteEvents.location', 'cteEvents.partner'])
                 ->first();
         });
@@ -98,14 +99,16 @@ class TraceabilityController extends Controller
         $validationError = $this->validateTLC($tlc);
         if ($validationError) return $validationError;
 
-        // Log the trace request
         Log::channel('traceability')->info('API Trace Forward', [
             'tlc' => $tlc,
-            'ip' => request()->ip(),
-            'user_id' => auth()->id(),
+            'ip_hash' => hash('sha256', request()->ip()),
+            'user_hash' => hash('sha256', (string)auth()->id()),
         ]);
 
-        $record = TraceRecord::where('tlc', $tlc)->first();
+        $user = auth()->user();
+        $record = TraceRecord::where('tlc', $tlc)
+            ->where('organization_id', $user->organization_id)
+            ->first();
 
         if (!$record) {
             return response()->json([
@@ -114,8 +117,8 @@ class TraceabilityController extends Controller
             ], 404);
         }
 
-        // Cache for 10 minutes
-        $cacheKey = "trace_forward_{$tlc}";
+        $cacheKey = "trace_forward_{$tlc}_org_{$user->organization_id}";
+        
         $result = Cache::remember($cacheKey, 600, function() use ($record) {
             return $this->traceabilityService->traceForward($record);
         });
@@ -133,14 +136,16 @@ class TraceabilityController extends Controller
         $validationError = $this->validateTLC($tlc);
         if ($validationError) return $validationError;
 
-        // Log the trace request
         Log::channel('traceability')->info('API Trace Backward', [
             'tlc' => $tlc,
-            'ip' => request()->ip(),
-            'user_id' => auth()->id(),
+            'ip_hash' => hash('sha256', request()->ip()),
+            'user_hash' => hash('sha256', (string)auth()->id()),
         ]);
 
-        $record = TraceRecord::where('tlc', $tlc)->first();
+        $user = auth()->user();
+        $record = TraceRecord::where('tlc', $tlc)
+            ->where('organization_id', $user->organization_id)
+            ->first();
 
         if (!$record) {
             return response()->json([
@@ -149,8 +154,8 @@ class TraceabilityController extends Controller
             ], 404);
         }
 
-        // Cache for 10 minutes
-        $cacheKey = "trace_backward_{$tlc}";
+        $cacheKey = "trace_backward_{$tlc}_org_{$user->organization_id}";
+        
         $result = Cache::remember($cacheKey, 600, function() use ($record) {
             return $this->traceabilityService->traceBackward($record);
         });

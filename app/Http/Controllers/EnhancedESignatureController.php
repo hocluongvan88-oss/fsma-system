@@ -11,13 +11,30 @@ use Illuminate\Support\Facades\Log;
 class EnhancedESignatureController extends Controller
 {
     /**
+     * Added constructor with middleware to enforce feature checking
+     */
+    public function __construct()
+    {
+        $this->middleware('auth');
+        $this->middleware('admin');
+        $this->middleware('package.feature:e_signatures');
+    }
+
+    /**
      * Hiển thị danh sách chữ ký điện tử
+     * Added tenant isolation
      */
     public function index()
     {
-        $signatures = ESignature::with('user')
-            ->latest('created_at')
-            ->paginate(25);
+        $user = auth()->user();
+        
+        $query = ESignature::with('user')->latest('created_at');
+        
+        if (!$user->isAdmin()) {
+            $query->where('organization_id', $user->organization_id);
+        }
+        
+        $signatures = $query->paginate(25);
 
         return view('admin.e-signatures.index', compact('signatures'));
     }
@@ -32,12 +49,14 @@ class EnhancedESignatureController extends Controller
 
     /**
      * API: Trả về dữ liệu JSON cho biểu đồ hiệu năng
+     * Added tenant isolation to all queries
      */
     public function performanceMetrics(Request $request)
     {
         Log::info('[v0] Performance metrics requested', ['period' => $request->get('period', 'day')]);
         
         try {
+            $user = auth()->user();
             $period = $request->get('period', 'day');
             
             $startDate = match($period) {
@@ -47,11 +66,17 @@ class EnhancedESignatureController extends Controller
                 default => now()->startOfDay(),
             };
             
-            $signaturesInPeriod = ESignature::with('user')
+            $baseQuery = ESignature::query();
+            if (!$user->isAdmin()) {
+                $baseQuery->where('organization_id', $user->organization_id);
+            }
+            
+            $signaturesInPeriod = (clone $baseQuery)
+                ->with('user')
                 ->where('created_at', '>=', $startDate)
                 ->get();
             
-            $totalSignatures = ESignature::count();
+            $totalSignatures = (clone $baseQuery)->count();
             $signaturesThisPeriod = $signaturesInPeriod->count();
             
             $getStatus = function($sig) {
@@ -66,7 +91,8 @@ class EnhancedESignatureController extends Controller
                 ? round(($completedCount / $signaturesThisPeriod) * 100, 1) 
                 : 0;
             
-            $recentSignatures = ESignature::with('user')
+            $recentSignatures = (clone $baseQuery)
+                ->with('user')
                 ->latest('created_at')
                 ->limit(10)
                 ->get()
@@ -74,7 +100,7 @@ class EnhancedESignatureController extends Controller
                     return [
                         'id' => $sig->id,
                         'record_type' => $sig->record_type ?? 'N/A',
-                        'user_name' => $sig->user->name ?? 'Unknown',
+                        'user_name' => $sig->user->full_name ?? 'Unknown',
                         'status' => $getStatus($sig),
                         'created_at' => $sig->created_at->toISOString(),
                         'signed_at' => $sig->signed_at ? $sig->signed_at->toISOString() : null,
@@ -84,7 +110,8 @@ class EnhancedESignatureController extends Controller
             $performanceTrend = [];
             for ($i = 6; $i >= 0; $i--) {
                 $date = now()->subDays($i);
-                $daySignatures = ESignature::whereDate('created_at', $date)->get();
+                $dayQuery = clone $baseQuery;
+                $daySignatures = $dayQuery->whereDate('created_at', $date)->get();
                 
                 $dayCompleted = $daySignatures->filter(fn($s) => $s->signed_at !== null)->count();
                 $dayTotal = $daySignatures->count();
@@ -96,7 +123,7 @@ class EnhancedESignatureController extends Controller
                 ];
             }
             
-            $allSignatures = ESignature::all();
+            $allSignatures = (clone $baseQuery)->get();
             $statusDistribution = [
                 'completed' => $allSignatures->filter(fn($s) => $s->signed_at !== null && !$s->is_revoked)->count(),
                 'pending' => $allSignatures->filter(fn($s) => $s->signed_at === null && !$s->is_revoked && !$s->is_expired)->count(),
@@ -188,13 +215,19 @@ class EnhancedESignatureController extends Controller
 
     /**
      * API: Dữ liệu nhật ký (audit trail)
+     * Added tenant isolation
      */
     public function auditTrail()
     {
-        $signatures = ESignature::with('user')
-            ->latest('created_at')
-            ->take(100)
-            ->get(['id', 'user_id', 'record_type', 'record_id', 'action', 'signed_at']);
+        $user = auth()->user();
+        
+        $query = ESignature::with('user')->latest('created_at')->take(100);
+        
+        if (!$user->isAdmin()) {
+            $query->where('organization_id', $user->organization_id);
+        }
+        
+        $signatures = $query->get(['id', 'user_id', 'record_type', 'record_id', 'action', 'signed_at']);
 
         return response()->json([
             'success' => true,
@@ -203,21 +236,29 @@ class EnhancedESignatureController extends Controller
     }
 
     /**
-     * Hiển thị chi tiết một chữ ký điện tử
+     * Hiển thị chi ti��t một chữ ký điện tử
+     * Added authorization check
      */
     public function show(ESignature $signature)
     {
+        $this->authorize('view', $signature);
+        
         return view('admin.e-signatures.show', compact('signature'));
     }
 
     /**
      * Xác minh chữ ký điện tử
+     * Added authorization check
      */
     public function verify(Request $request)
     {
         $validated = $request->validate([
             'signature_id' => 'required|integer|exists:e_signatures,id',
         ]);
+
+        $signature = ESignature::findOrFail($validated['signature_id']);
+        
+        $this->authorize('verify', $signature);
 
         // TODO: Logic xác minh chữ ký thực tế
         return response()->json([
@@ -228,24 +269,36 @@ class EnhancedESignatureController extends Controller
 
     /**
      * Thu hồi chữ ký điện tử
+     * Added authorization check and improved security
      */
     public function revoke(Request $request)
     {
         $validated = $request->validate([
             'signature_id' => 'required|integer|exists:e_signatures,id',
-            'reason' => 'nullable|string',
+            'reason' => 'required|string|min:10|max:500',
         ]);
 
         $signature = ESignature::findOrFail($validated['signature_id']);
+        
+        $this->authorize('revoke', $signature);
+
+        if ($signature->is_revoked) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Signature is already revoked',
+            ], 400);
+        }
+
         $signature->update([
             'is_revoked' => true,
-            'revoked_reason' => $validated['reason'] ?? null,
+            'revocation_reason' => $validated['reason'],
             'revoked_at' => now(),
         ]);
 
         Log::info('[v0] Signature revoked', [
             'signature_id' => $signature->id,
-            'reason' => $validated['reason'] ?? 'No reason provided'
+            'revoked_by' => auth()->id(),
+            'reason' => $validated['reason']
         ]);
 
         return response()->json([

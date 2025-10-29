@@ -5,10 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Services\CacheService;
+use App\Traits\HasOrganizationScope;
+use Illuminate\Support\Facades\Auth;
 
 class Location extends Model
 {
-    use HasFactory;
+    use HasFactory, HasOrganizationScope;
 
     protected $fillable = [
         'location_name',
@@ -26,6 +28,12 @@ class Location extends Model
     protected static function boot()
     {
         parent::boot();
+
+        static::creating(function ($location) {
+            if (empty($location->organization_id) && Auth::check()) {
+                $location->organization_id = Auth::user()->organization_id;
+            }
+        });
 
         static::saved(function ($location) {
             CacheService::forgetByTag('locations');

@@ -197,3 +197,308 @@ Stack trace:
 #0 /home/fxiasdcg/root/public/index.php(16): require_once()
 #1 {main}
   thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 10:58:41 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:07:36 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:13:13 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:13:16 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:19:13 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:19:18 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:50:47 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:52:06 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:52:27 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 11:54:14 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:39 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:40 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:41 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:41 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:42 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:42 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:42 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:42 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:42 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:12:43 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:15:46 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:15:46 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:15:46 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:15:50 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:15:57 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:15:58 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:20:34 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:20:35 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:20:35 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:46 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:46 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:48 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:49 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:50 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:50 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:50 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:50 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:50 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:51 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:52 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:30:52 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:39:44 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:39:57 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:07 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:08 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:09 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:09 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:10 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:10 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:10 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:10 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:10 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:11 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:54 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29
+[23-Oct-2025 12:45:57 UTC] PHP Fatal error:  Uncaught Error: Call to undefined method Illuminate\Foundation\Configuration\ApplicationBuilder::withAliases() in /home/fxiasdcg/root/bootstrap/app.php:29
+Stack trace:
+#0 /home/fxiasdcg/root/public/index.php(16): require_once()
+#1 {main}
+  thrown in /home/fxiasdcg/root/bootstrap/app.php on line 29

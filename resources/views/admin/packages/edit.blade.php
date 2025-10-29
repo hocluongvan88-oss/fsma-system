@@ -266,6 +266,81 @@
                 </div>
             </div>
 
+            <!-- Features Toggles -->
+            <div style="background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 0.75rem; padding: 1.5rem;">
+                <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                    </svg>
+                    {{ __('messages.feature_toggles') }}
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.25rem;">
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" name="has_traceability" value="1" 
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;"
+                                   {{ old('has_traceability', $package->has_traceability) ? 'checked' : '' }}>
+                            <span style="font-weight: 500;">Traceability</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" name="has_document_management" value="1" 
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;"
+                                   {{ old('has_document_management', $package->has_document_management) ? 'checked' : '' }}>
+                            <span style="font-weight: 500;">Document Management</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" name="has_e_signatures" value="1" 
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;"
+                                   {{ old('has_e_signatures', $package->has_e_signatures) ? 'checked' : '' }}>
+                            <span style="font-weight: 500;">E-Signatures</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" name="has_certificates" value="1" 
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;"
+                                   {{ old('has_certificates', $package->has_certificates) ? 'checked' : '' }}>
+                            <span style="font-weight: 500;">Certificates</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" name="has_data_retention" value="1" 
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;"
+                                   {{ old('has_data_retention', $package->has_data_retention) ? 'checked' : '' }}>
+                            <span style="font-weight: 500;">Data Retention</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" name="has_archival" value="1" 
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;"
+                                   {{ old('has_archival', $package->has_archival) ? 'checked' : '' }}>
+                            <span style="font-weight: 500;">Archival</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.75rem; cursor: pointer;">
+                            <input type="checkbox" name="has_compliance_report" value="1" 
+                                   style="width: 1.25rem; height: 1.25rem; cursor: pointer;"
+                                   {{ old('has_compliance_report', $package->has_compliance_report) ? 'checked' : '' }}>
+                            <span style="font-weight: 500;">Compliance Report</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
             <!-- Submit Buttons -->
             <div style="display: flex; gap: 1rem; justify-content: flex-end; padding-top: 1rem; border-top: 1px solid var(--border-color);">
                 <a href="{{ route('admin.packages.index') }}" class="btn btn-secondary">
@@ -283,24 +358,4 @@
         </div>
     </form>
 </div>
-
-<script>
-// Convert features textarea to array before submit
-document.querySelector('form').addEventListener('submit', function(e) {
-    const featuresText = document.getElementById('features').value;
-    const featuresArray = featuresText.split('\n').filter(line => line.trim() !== '');
-    
-    // Remove the textarea
-    document.getElementById('features').remove();
-    
-    // Add hidden inputs for each feature
-    featuresArray.forEach((feature, index) => {
-        const input = document.createElement('input');
-        input.type = 'hidden';
-        input.name = `features[${index}]`;
-        input.value = feature.trim();
-        this.appendChild(input);
-    });
-});
-</script>
 @endsection

@@ -6,8 +6,7 @@ use App\Http\Controllers\Api\TraceabilityController;
 use App\Http\Controllers\Api\FDAExportController;
 use App\Http\Controllers\Api\ExportVerificationController;
 
-Route::middleware(['auth:sanctum', 'rate.limit.trace'])->group(function () {
-    // 📦 Barcode scanning endpoints
+Route::middleware(['auth:sanctum', 'rate.limit.trace', 'package.feature:compliance_report'])->group(function () {
     Route::post('/barcode/scan', [BarcodeController::class, 'scan']);
     Route::post('/barcode/validate', [BarcodeController::class, 'validateTLC']);
 
@@ -17,7 +16,6 @@ Route::middleware(['auth:sanctum', 'rate.limit.trace'])->group(function () {
         Route::get('/{tlc}/backward', [TraceabilityController::class, 'traceBackward'])->name('backward');
     });
 
-    // 🧾 FDA Export endpoints
     Route::prefix('fda-export')->group(function () {
         Route::get('/all', [FDAExportController::class, 'exportAll']);
         Route::get('/product/{productId}', [FDAExportController::class, 'exportByProduct']);
@@ -32,5 +30,5 @@ Route::middleware(['auth:sanctum', 'rate.limit.trace'])->group(function () {
         Route::get('/list', [ExportVerificationController::class, 'listExports']);
     });
 });
-// Thêm đoạn code này ở cuối file api.php
+
 Route::get('/translations/{locale}', [LanguageController::class, 'getTranslations']);
